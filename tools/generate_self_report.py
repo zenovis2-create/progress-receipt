@@ -71,9 +71,10 @@ def count_tests(repo: Path, ref: str, files: list[str]) -> int:
     """Count test functions actually present in a tree, rather than asserting one."""
     total = 0
     for path in files:
-        if not path.startswith("tests/") and not path.startswith("tools/tests/"):
-            continue
-        if not path.endswith(".py"):
+        name = path.rsplit("/", 1)[-1]
+        # Test modules have lived under scripts/ and under tests/ across this
+        # history, so select them by module name rather than by directory.
+        if not (name.startswith("test_") and name.endswith(".py")) and not name.endswith("_test.py"):
             continue
         total += len(re.findall(r"^\s*def test_", git(repo, "show", f"{ref}:{path}"), re.MULTILINE))
     return total
