@@ -1,2 +1,9 @@
-examples/self-report/** -text
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.html text eol=lf
 *.png binary
+# Sealed reports are byte-exact: their SHA-256 receipt covers these files, so
+# Git must never translate their line endings. This rule stays last so it wins.
+examples/self-report/** -text

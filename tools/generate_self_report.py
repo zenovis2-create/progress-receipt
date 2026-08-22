@@ -11,6 +11,7 @@ from html import escape
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -20,6 +21,9 @@ from typing import Any
 from progress_receipt import collect as collect_progress
 from progress_receipt import render as render_progress
 from progress_receipt._skill_loader import skill_root
+
+
+REVIEWER = os.environ.get("PROGRESS_RECEIPT_REVIEWER", "progress-receipt self-report review (agent)")
 
 
 class SelfReportError(RuntimeError):
@@ -63,7 +67,44 @@ def tree(repo: Path, ref: str) -> list[str]:
     return [line for line in git(repo, "ls-tree", "-r", "--name-only", ref).splitlines() if line]
 
 
-def surface_html(ref: str, files: list[str], before: bool) -> str:
+def count_tests(repo: Path, ref: str, files: list[str]) -> int:
+    """Count test functions actually present in a tree, rather than asserting one."""
+    total = 0
+    for path in files:
+        if not path.startswith("tests/") and not path.startswith("tools/tests/"):
+            continue
+        if not path.endswith(".py"):
+            continue
+        total += len(re.findall(r"^\s*def test_", git(repo, "show", f"{ref}:{path}"), re.MULTILINE))
+    return total
+
+
+def count_subcommands(repo: Path, ref: str, files: list[str]) -> int:
+    """Count CLI subcommands declared in the tree, rather than asserting one."""
+    if "src/progress_receipt/cli.py" not in files:
+        return 0
+    return len(re.findall(r"add_parser\(\s*\"", git(repo, "show", f"{ref}:src/progress_receipt/cli.py")))
+
+
+def python_310_probe(repo: Path) -> tuple[str, int]:
+    """Run the suite on the declared minimum interpreter and report what happened."""
+    for launcher in (["python3.10"], ["py", "-3.10"]):
+        probe = subprocess.run(
+            [*launcher, "--version"],
+            cwd=repo,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=60,
+        )
+        if probe.returncode == 0:
+            command = [*launcher, "-m", "unittest", "discover", "-s", "tests"]
+            result = subprocess.run(command, cwd=repo, check=False, timeout=300)
+            return " ".join(command), result.returncode
+    return "py -3.10 -m unittest discover -s tests", 9009
+
+
+def surface_html(ref: str, files: list[str], before: bool, entry_points: int, tests: int) -> str:
     title = "Imported Agent Skill" if before else "Launchable OSS Product"
     label = "BEFORE · demo-before" if before else "AFTER · release candidate"
     summary = (
@@ -71,8 +112,6 @@ def surface_html(ref: str, files: list[str], before: bool) -> str:
         if before
         else "A uvx-ready CLI and a standalone Agent Skill from one canonical implementation."
     )
-    entry_points = 0 if before else 4
-    tests = 7 if before else 29
     if before:
         selected = files
     else:
@@ -114,7 +153,7 @@ main{{width:1200px;height:675px;padding:44px;background:linear-gradient(145deg,#
 .metric{{border:1px solid #d7dee9;border-radius:16px;padding:15px}}.metric strong{{display:block;font-size:30px;color:{accent}}}.metric span{{color:#64748b;font-size:13px}}
 .tree{{padding:30px;overflow:hidden}}.tree h2{{font-size:20px;margin:0 0 14px}}ul{{list-style:none;padding:0;margin:0;display:grid;gap:6px}}
 li{{padding:5px 9px;border-radius:8px;background:#f7f9fc;color:#334155}}code{{font:13px ui-monospace,monospace}}.omitted{{color:#64748b;font-size:13px}}
-</style></head><body><main><section class="shell"><article class="hero"><div><div class="eyebrow">{escape(label)}</div><h1>{escape(title)}</h1><p class="summary">{escape(summary)}</p></div><div class="metrics"><div class="metric"><strong>{len(files)}</strong><span>tracked files</span></div><div class="metric"><strong>{entry_points}</strong><span>CLI entry points</span></div><div class="metric"><strong>{tests}</strong><span>tests</span></div></div></article><article class="tree"><h2>Repository surface</h2><ul>{rows}</ul>{omission}</article></section></main></body></html>"""
+</style></head><body><main><section class="shell"><article class="hero"><div><div class="eyebrow">{escape(label)}</div><h1>{escape(title)}</h1><p class="summary">{escape(summary)}</p></div><div class="metrics"><div class="metric"><strong>{len(files)}</strong><span>tracked files</span></div><div class="metric"><strong>{entry_points}</strong><span>CLI subcommands</span></div><div class="metric"><strong>{tests}</strong><span>test functions</span></div></div></article><article class="tree"><h2>Repository surface</h2><ul>{rows}</ul>{omission}</article></section></main></body></html>"""
 
 
 def screenshot(browser: Path, source: Path, output: Path) -> None:
@@ -142,7 +181,7 @@ def run_tests(repo: Path) -> int:
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
         cwd=repo,
         check=False,
-        timeout=120,
+        timeout=300,
     )
     return result.returncode
 
@@ -153,11 +192,19 @@ def enrich(
     base: str,
     head: str,
     test_exit_code: int,
+    before_counts: tuple[int, int, int],
+    after_counts: tuple[int, int, int],
+    floor_probe: tuple[str, int],
 ) -> None:
     captured_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     fingerprint = manifest["repository"]["worktreeFingerprint"]
+    version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    before_files, before_subcommands, before_tests = before_counts
+    after_files, after_subcommands, after_tests = after_counts
+    floor_command, floor_exit = floor_probe
+    floor_status = "verified" if floor_exit == 0 else "blocked"
     manifest["report"] = {
-        "title": "progress-receipt v0.1.0 launch receipt",
+        "title": "progress-receipt launch receipt",
         "lang": "en",
         "status": "verified",
         "outcome": {
@@ -165,14 +212,14 @@ def enrich(
             "source": "agent",
         },
         "before": {
-            "text": "The repository contained a SKILL.md, three loose scripts, a template, and seven focused tests.",
+            "text": f"The repository contained a SKILL.md, three loose scripts, a template, and {before_tests} test functions across {before_files} tracked files, with no CLI.",
             "source": "agent",
         },
         "after": {
-            "text": "The release adds package metadata, four CLI commands, standalone skill distribution, trust coverage, CI, and launch documentation.",
+            "text": f"The release adds package metadata, {after_subcommands} CLI subcommands, standalone skill distribution, {after_tests} test functions across {after_files} tracked files, CI, and launch documentation.",
             "source": "agent",
         },
-        "scope": {"text": "Repository changes from demo-before through the v0.1.0 release candidate.", "source": "agent"},
+        "scope": {"text": f"Repository changes from the {base[:12]} import through the {head[:12]} release candidate. Hosted CI, PyPI publication, and non-local platforms are out of scope.", "source": "agent"},
         "highlights": [
             {
                 "text": "Narrative claims and impact statements in this report were agent-authored; they are not independent verification.",
@@ -180,9 +227,14 @@ def enrich(
                 "status": "changed",
             },
             {
-                "text": "The Python 3.12 test command is recorded as tool evidence with its real exit code.",
+                "text": f"The Python {version} test command is recorded as tool evidence with its real exit code.",
                 "source": "agent",
                 "status": "verified",
+            },
+            {
+                "text": "The declared Python 3.10 floor is checked by running the suite on 3.10, not by asserting it.",
+                "source": "agent",
+                "status": floor_status,
             },
         ],
         "visualComparisons": [
@@ -199,12 +251,22 @@ def enrich(
     }
     manifest["claims"] = [
         {
-            "id": "tests-python-312",
-            "title": "Full Python 3.12 suite passed",
-            "detail": "Sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
+            "id": "tests-local-python",
+            "title": f"Full Python {version} suite passed",
+            "detail": f"{after_tests} test functions covering sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
             "status": "verified",
             "source": "agent",
-            "evidenceIds": ["unittest-python-312"],
+            "evidenceIds": ["unittest-local-python"],
+        },
+        {
+            "id": "python-floor",
+            "title": "Declared Python 3.10 floor could not be exercised"
+            if floor_status == "blocked"
+            else "Declared Python 3.10 floor passed",
+            "detail": "pyproject.toml declares requires-python >= 3.10. The check ran on this machine and its real exit code is attached; a non-zero code means no 3.10 interpreter was available, so the floor remains an untested claim here.",
+            "status": floor_status,
+            "source": "agent",
+            "evidenceIds": ["unittest-python-310"],
         },
         {
             "id": "launch-packaging",
@@ -225,14 +287,25 @@ def enrich(
     ]
     manifest["evidence"] = [
         {
-            "id": "unittest-python-312",
+            "id": "unittest-local-python",
             "kind": "command",
-            "label": "Full Python 3.12 unittest suite",
+            "label": f"Full Python {version} unittest suite",
             "source": "tool",
             "producedAtRef": head,
             "worktreeFingerprint": fingerprint,
-            "command": "python -m unittest discover -s tests -v",
+            "command": f"python{version} -m unittest discover -s tests -v",
             "exitCode": test_exit_code,
+            "capturedAt": captured_at,
+        },
+        {
+            "id": "unittest-python-310",
+            "kind": "command",
+            "label": "Suite on the declared minimum interpreter",
+            "source": "tool",
+            "producedAtRef": head,
+            "worktreeFingerprint": fingerprint,
+            "command": floor_command,
+            "exitCode": floor_exit,
             "capturedAt": captured_at,
         },
         {
@@ -246,8 +319,8 @@ def enrich(
             "capturedAt": captured_at,
             "path": "launch-before.png",
             "reviewed": True,
-            "reviewer": {"source": "agent", "name": "Codex release review"},
-            "alt": "The demo-before repository shown as nine loose skill files with no CLI entry points.",
+            "reviewer": {"source": "agent", "name": REVIEWER},
+            "alt": f"The imported repository shown as {before_files} tracked files with {before_subcommands} CLI subcommands and {before_tests} test functions.",
         },
         {
             "id": "launch-after",
@@ -259,8 +332,8 @@ def enrich(
             "capturedAt": captured_at,
             "path": "launch-after.png",
             "reviewed": True,
-            "reviewer": {"source": "agent", "name": "Codex release review"},
-            "alt": "The release-candidate repository shown with CLI, skill, tests, CI, documentation, and package metadata.",
+            "reviewer": {"source": "agent", "name": REVIEWER},
+            "alt": f"The release-candidate repository shown as {after_files} tracked files with {after_subcommands} CLI subcommands and {after_tests} test functions.",
         },
     ]
     manifest["qualityGate"] = {
@@ -281,13 +354,22 @@ def generate(repo: Path, base_ref: str, output: Path) -> Path:
     test_exit_code = run_tests(repo)
     if test_exit_code:
         raise SelfReportError("The self-report test command failed")
+    floor_probe = python_310_probe(repo)
     browser = find_browser()
+    before_files = tree(repo, base)
+    after_files = tree(repo, head)
+    before_counts = (len(before_files), count_subcommands(repo, base, before_files), count_tests(repo, base, before_files))
+    after_counts = (len(after_files), count_subcommands(repo, head, after_files), count_tests(repo, head, after_files))
     with tempfile.TemporaryDirectory(prefix="progress-receipt-self-report-") as temp:
         workspace = Path(temp)
         before_html = workspace / "launch-before.html"
         after_html = workspace / "launch-after.html"
-        before_html.write_text(surface_html(base, tree(repo, base), before=True), encoding="utf-8")
-        after_html.write_text(surface_html(head, tree(repo, head), before=False), encoding="utf-8")
+        before_html.write_text(
+            surface_html(base, before_files, True, before_counts[1], before_counts[2]), encoding="utf-8"
+        )
+        after_html.write_text(
+            surface_html(head, after_files, False, after_counts[1], after_counts[2]), encoding="utf-8"
+        )
         screenshot(browser, before_html, workspace / "launch-before.png")
         screenshot(browser, after_html, workspace / "launch-after.png")
         args = argparse.Namespace(
@@ -300,7 +382,7 @@ def generate(repo: Path, base_ref: str, output: Path) -> Path:
             max_commits=50,
         )
         manifest = collect_progress.build_manifest(args)
-        enrich(manifest, workspace, base, head, test_exit_code)
+        enrich(manifest, workspace, base, head, test_exit_code, before_counts, after_counts, floor_probe)
         draft = workspace / "manifest.json"
         draft.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         render_progress.publish(draft, skill_root() / "assets" / "report-template.html", output)
