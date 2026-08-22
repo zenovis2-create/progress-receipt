@@ -11,6 +11,7 @@ from html import escape
 import json
 import os
 from pathlib import Path
+import platform
 import re
 import shutil
 import subprocess
@@ -89,7 +90,22 @@ def count_subcommands(repo: Path, ref: str, files: list[str]) -> int:
 
 def python_310_probe(repo: Path) -> tuple[str, int]:
     """Run the suite on the declared minimum interpreter and report what happened."""
-    for launcher in (["python3.10"], ["py", "-3.10"]):
+    launchers = [["python3.10"], ["py", "-3.10"]]
+    if shutil.which("uv"):
+        launchers.append(
+            [
+                "uv",
+                "run",
+                "--isolated",
+                "--python",
+                "3.10",
+                "--no-project",
+                "--with-editable",
+                ".",
+                "python",
+            ]
+        )
+    for launcher in launchers:
         try:
             probe = subprocess.run(
                 [*launcher, "--version"],
@@ -207,6 +223,7 @@ def enrich(
     after_files, after_subcommands, after_tests = after_counts
     floor_command, floor_exit = floor_probe
     floor_status = "verified" if floor_exit == 0 else "blocked"
+    local_host = " ".join(part for part in (platform.system(), platform.machine()) if part)
     manifest["report"] = {
         "title": "progress-receipt launch receipt",
         "lang": "en",
@@ -282,8 +299,16 @@ def enrich(
         },
         {
             "id": "hosted-ci",
-            "title": "Hosted OS matrix was not observed",
-            "detail": "Ubuntu, macOS, and Windows jobs are configured, but this local report does not claim a hosted GitHub Actions result.",
+            "title": "Hosted runner verification is outside this local run",
+            "detail": f"The generator exercised one {local_host} host. It could not reproduce GitHub-hosted Ubuntu, macOS, and Windows runners inside this local generation step, so this claim does not assert their result.",
+            "status": "blocked",
+            "source": "agent",
+            "evidenceIds": ["local-host"],
+        },
+        {
+            "id": "pypi-publication",
+            "title": "PyPI publication was not observed",
+            "detail": "This local report did not query PyPI or attempt a package publication.",
             "status": "not_observed",
             "source": "agent",
             "evidenceIds": [],
@@ -310,6 +335,15 @@ def enrich(
             "worktreeFingerprint": fingerprint,
             "command": floor_command,
             "exitCode": floor_exit,
+            "capturedAt": captured_at,
+        },
+        {
+            "id": "local-host",
+            "kind": "metric",
+            "label": f"Self-report generated locally on {local_host}",
+            "source": "tool",
+            "producedAtRef": head,
+            "worktreeFingerprint": fingerprint,
             "capturedAt": captured_at,
         },
         {
