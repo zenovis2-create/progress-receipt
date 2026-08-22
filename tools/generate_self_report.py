@@ -89,14 +89,17 @@ def count_subcommands(repo: Path, ref: str, files: list[str]) -> int:
 def python_310_probe(repo: Path) -> tuple[str, int]:
     """Run the suite on the declared minimum interpreter and report what happened."""
     for launcher in (["python3.10"], ["py", "-3.10"]):
-        probe = subprocess.run(
-            [*launcher, "--version"],
-            cwd=repo,
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=60,
-        )
+        try:
+            probe = subprocess.run(
+                [*launcher, "--version"],
+                cwd=repo,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=60,
+            )
+        except OSError:
+            continue
         if probe.returncode == 0:
             command = [*launcher, "-m", "unittest", "discover", "-s", "tests"]
             result = subprocess.run(command, cwd=repo, check=False, timeout=300)
