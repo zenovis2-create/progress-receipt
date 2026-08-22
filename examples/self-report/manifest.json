@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-22T13:31:29+09:00",
+  "generatedAt": "2026-08-22T16:04:48+09:00",
   "repository": {
     "id": "c53e5937eb3ecc464e6cd04e005c8dacc9fe96d8b2c161ba79f066d16aea522d",
     "label": "progress-receipt",
@@ -11,7 +11,7 @@
   },
   "range": {
     "fromRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
-    "toRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+    "toRef": "6695d93522cb46a6534a65e475bd39eab006246a",
     "source": "git"
   },
   "report": {
@@ -27,11 +27,11 @@
       "source": "agent"
     },
     "after": {
-      "text": "The release adds package metadata, 4 CLI subcommands, standalone skill distribution, 53 test functions across 37 tracked files, CI, and launch documentation.",
+      "text": "The release adds package metadata, 4 CLI subcommands, standalone skill distribution, 55 test functions across 38 tracked files, CI, and launch documentation.",
       "source": "agent"
     },
     "scope": {
-      "text": "Repository changes from the c415de5a7bbe import through the 92dfddc07122 release candidate. Hosted CI, PyPI publication, and non-local platforms are out of scope.",
+      "text": "Repository changes from the c415de5a7bbe import through the 6695d93522cb release candidate. Hosted CI, PyPI publication, and non-local platforms are out of scope.",
       "source": "agent"
     },
     "highlights": [
@@ -48,7 +48,7 @@
       {
         "text": "The declared Python 3.10 floor is checked by running the suite on 3.10, not by asserting it.",
         "source": "agent",
-        "status": "blocked"
+        "status": "verified"
       }
     ],
     "visualComparisons": [
@@ -66,17 +66,17 @@
   "metrics": [
     {
       "label": "Changed files",
-      "value": 46,
+      "value": 47,
       "source": "git"
     },
     {
       "label": "Commits",
-      "value": 14,
+      "value": 20,
       "source": "git"
     },
     {
       "label": "Lines added",
-      "value": 4139,
+      "value": 4405,
       "source": "git"
     },
     {
@@ -89,7 +89,7 @@
     {
       "id": "tests-local-python",
       "title": "Full Python 3.12 suite passed",
-      "detail": "53 test functions covering sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
+      "detail": "55 test functions covering sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
       "status": "verified",
       "source": "agent",
       "evidenceIds": [
@@ -98,9 +98,9 @@
     },
     {
       "id": "python-floor",
-      "title": "Declared Python 3.10 floor could not be exercised",
+      "title": "Declared Python 3.10 floor passed",
       "detail": "pyproject.toml declares requires-python >= 3.10. The check ran on this machine and its real exit code is attached; a non-zero code means no 3.10 interpreter was available, so the floor remains an untested claim here.",
-      "status": "blocked",
+      "status": "verified",
       "source": "agent",
       "evidenceIds": [
         "unittest-python-310"
@@ -116,8 +116,18 @@
     },
     {
       "id": "hosted-ci",
-      "title": "Hosted OS matrix was not observed",
-      "detail": "Ubuntu, macOS, and Windows jobs are configured, but this local report does not claim a hosted GitHub Actions result.",
+      "title": "Hosted runner verification is outside this local run",
+      "detail": "The generator exercised one Windows AMD64 host. It could not reproduce GitHub-hosted Ubuntu, macOS, and Windows runners inside this local generation step, so this claim does not assert their result.",
+      "status": "blocked",
+      "source": "agent",
+      "evidenceIds": [
+        "local-host"
+      ]
+    },
+    {
+      "id": "pypi-publication",
+      "title": "PyPI publication was not observed",
+      "detail": "This local report did not query PyPI or attempt a package publication.",
       "status": "not_observed",
       "source": "agent",
       "evidenceIds": []
@@ -129,22 +139,31 @@
       "kind": "command",
       "label": "Full Python 3.12 unittest suite",
       "source": "tool",
-      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+      "producedAtRef": "6695d93522cb46a6534a65e475bd39eab006246a",
       "worktreeFingerprint": "clean",
       "command": "python3.12 -m unittest discover -s tests -v",
       "exitCode": 0,
-      "capturedAt": "2026-08-22T13:31:29+09:00"
+      "capturedAt": "2026-08-22T16:04:48+09:00"
     },
     {
       "id": "unittest-python-310",
       "kind": "command",
       "label": "Suite on the declared minimum interpreter",
       "source": "tool",
-      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+      "producedAtRef": "6695d93522cb46a6534a65e475bd39eab006246a",
       "worktreeFingerprint": "clean",
-      "command": "py -3.10 -m unittest discover -s tests",
-      "exitCode": 9009,
-      "capturedAt": "2026-08-22T13:31:29+09:00"
+      "command": "uv run --isolated --python 3.10 --no-project --with-editable . python -m unittest discover -s tests",
+      "exitCode": 0,
+      "capturedAt": "2026-08-22T16:04:48+09:00"
+    },
+    {
+      "id": "local-host",
+      "kind": "metric",
+      "label": "Self-report generated locally on Windows AMD64",
+      "source": "tool",
+      "producedAtRef": "6695d93522cb46a6534a65e475bd39eab006246a",
+      "worktreeFingerprint": "clean",
+      "capturedAt": "2026-08-22T16:04:48+09:00"
     },
     {
       "id": "launch-before",
@@ -154,12 +173,12 @@
       "producedAtRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
       "worktreeFingerprint": "unknown",
       "historical": true,
-      "capturedAt": "2026-08-22T13:31:29+09:00",
+      "capturedAt": "2026-08-22T16:04:48+09:00",
       "path": "assets/launch-before.png",
       "reviewed": true,
       "reviewer": {
         "source": "agent",
-        "name": "Claude Opus 5 self-report review"
+        "name": "progress-receipt self-report review (agent)"
       },
       "alt": "The imported repository shown as 9 tracked files with 0 CLI subcommands and 7 test functions.",
       "sha256": "2dc72494bc8038348925ce6e60d12104c0dae311ad398db0a416c529dcf1ea26"
@@ -169,17 +188,17 @@
       "kind": "capture",
       "label": "Packaged release repository",
       "source": "tool",
-      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+      "producedAtRef": "6695d93522cb46a6534a65e475bd39eab006246a",
       "worktreeFingerprint": "clean",
-      "capturedAt": "2026-08-22T13:31:29+09:00",
+      "capturedAt": "2026-08-22T16:04:48+09:00",
       "path": "assets/launch-after.png",
       "reviewed": true,
       "reviewer": {
         "source": "agent",
-        "name": "Claude Opus 5 self-report review"
+        "name": "progress-receipt self-report review (agent)"
       },
-      "alt": "The release-candidate repository shown as 37 tracked files with 4 CLI subcommands and 53 test functions.",
-      "sha256": "fc6329d20c9bddd89777fbe84362af94583d0ea3b2324532fefc906a1f76238a"
+      "alt": "The release-candidate repository shown as 38 tracked files with 4 CLI subcommands and 55 test functions.",
+      "sha256": "56e55a903a905d4ae03651b53adb99e21655ed2abc79920670248a6ed6c46a15"
     }
   ],
   "inventory": {
@@ -204,6 +223,14 @@
         "status": "A",
         "path": ".gitignore",
         "added": 9,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "IMPROVEMENTS.md",
+        "added": 40,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -251,7 +278,7 @@
       {
         "status": "A",
         "path": "docs/launch-todo.md",
-        "added": 8,
+        "added": 9,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -323,7 +350,7 @@
       {
         "status": "A",
         "path": "examples/self-report/manifest.json",
-        "added": 536,
+        "added": 672,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -435,7 +462,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/scripts/render_progress.py",
-        "added": 602,
+        "added": 614,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -515,7 +542,7 @@
       {
         "status": "A",
         "path": "tests/test_cli.py",
-        "added": 119,
+        "added": 122,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -531,7 +558,7 @@
       {
         "status": "A",
         "path": "tests/test_package_layout.py",
-        "added": 33,
+        "added": 73,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -547,16 +574,52 @@
       {
         "status": "A",
         "path": "tools/generate_self_report.py",
-        "added": 415,
+        "added": 449,
         "deleted": 0,
         "binary": false,
         "source": "git"
       }
     ],
-    "totalFiles": 46,
+    "totalFiles": 47,
     "omittedFiles": 0,
     "filesTruncated": false,
     "commits": [
+      {
+        "sha": "6695d93522cb46a6534a65e475bd39eab006246a",
+        "subject": "fix: make self-report floor probe uv-aware",
+        "authoredAt": "2026-08-22T16:03:39+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "785256c9c72326816ebac263de5964968a33e72c",
+        "subject": "fix: resolve both sides of the demo path comparison (8.3 short names)",
+        "authoredAt": "2026-08-22T15:50:05+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "9a90839a410ad4aa16c0adb3f7a4dbcc872d1bba",
+        "subject": "fix: compare resolved demo output paths (macOS /var and Windows 8.3 symlinks)",
+        "authoredAt": "2026-08-22T15:37:41+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "b9aa5ea070f74c303b37abdbb1efc581475dfa17",
+        "subject": "docs: record the review's findings and the remaining launch work",
+        "authoredAt": "2026-08-22T13:40:11+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "07501ad7a633bec11f740b221ea41003ca40c9a1",
+        "subject": "fix: publish reports with usable permissions and a clean failure",
+        "authoredAt": "2026-08-22T13:38:24+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "8a4e1ef11ae704a3677b252320bc82a6f830b6fd",
+        "subject": "docs: regenerate the self-report so it is current and shows all four states",
+        "authoredAt": "2026-08-22T13:34:52+09:00",
+        "source": "git"
+      },
       {
         "sha": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
         "subject": "fix: count self-report test functions wherever the modules live",
@@ -642,10 +705,10 @@
         "source": "git"
       }
     ],
-    "totalCommits": 14,
+    "totalCommits": 20,
     "omittedCommits": 0,
     "commitsTruncated": false,
-    "linesAdded": 4139,
+    "linesAdded": 4405,
     "linesDeleted": 1514
   },
   "qualityGate": {

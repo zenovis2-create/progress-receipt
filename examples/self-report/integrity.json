@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "htmlSha256": "bf3da0a0de6457dbf976e9f29ff325890307cfab7cbe029b1fc62d6035e14243",
-  "manifestSha256": "d2490311beda5d33df2f5ab1575c6c71914398eb98a6b4e551586fd138b475d9",
+  "htmlSha256": "1afa66fb5c1e4e0625fbad49b791ade6701141b119d54f4e26d0d5ed8051b88b",
+  "manifestSha256": "31278951249a8f1cebfce044556f021df3951c9cb75874caebbf2dd823c43252",
   "assets": {
-    "assets/launch-after.png": "fc6329d20c9bddd89777fbe84362af94583d0ea3b2324532fefc906a1f76238a",
+    "assets/launch-after.png": "56e55a903a905d4ae03651b53adb99e21655ed2abc79920670248a6ed6c46a15",
     "assets/launch-before.png": "2dc72494bc8038348925ce6e60d12104c0dae311ad398db0a416c529dcf1ea26"
   }
 }
