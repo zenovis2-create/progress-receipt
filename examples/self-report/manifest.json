@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-22T12:43:28+09:00",
+  "repository": {
+    "id": "c53e5937eb3ecc464e6cd04e005c8dacc9fe96d8b2c161ba79f066d16aea522d",
+    "label": "progress-receipt",
+    "branch": "packaging",
+    "detached": false,
+    "worktreeFingerprint": "clean",
+    "source": "git"
+  },
+  "range": {
+    "fromRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
+    "toRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+    "source": "git"
+  },
+  "report": {
+    "title": "progress-receipt v0.1.0 launch receipt",
+    "lang": "en",
+    "status": "verified",
+    "outcome": {
+      "text": "The imported progress-report skill is now a tested, uvx-ready open-source CLI that still ships as a standalone Agent Skill.",
+      "source": "agent"
+    },
+    "before": {
+      "text": "The repository contained a SKILL.md, three loose scripts, a template, and seven focused tests.",
+      "source": "agent"
+    },
+    "after": {
+      "text": "The release adds package metadata, four CLI commands, standalone skill distribution, trust coverage, CI, and launch documentation.",
+      "source": "agent"
+    },
+    "scope": {
+      "text": "Repository changes from demo-before through the v0.1.0 release candidate.",
+      "source": "agent"
+    },
+    "highlights": [
+      {
+        "text": "Narrative claims and impact statements in this report were agent-authored; they are not independent verification.",
+        "source": "agent",
+        "status": "changed"
+      },
+      {
+        "text": "The Python 3.12 test command is recorded as tool evidence with its real exit code.",
+        "source": "agent",
+        "status": "verified"
+      }
+    ],
+    "visualComparisons": [
+      {
+        "id": "launch-surface",
+        "title": "Repository launch surface",
+        "detail": "Actual Git trees at demo-before and the release-candidate head, rendered as reviewed local captures.",
+        "source": "agent",
+        "status": "changed",
+        "beforeEvidenceId": "launch-before",
+        "afterEvidenceId": "launch-after"
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "label": "Changed files",
+      "value": 39,
+      "source": "git"
+    },
+    {
+      "label": "Commits",
+      "value": 5,
+      "source": "git"
+    },
+    {
+      "label": "Lines added",
+      "value": 2952,
+      "source": "git"
+    },
+    {
+      "label": "Lines removed",
+      "value": 1514,
+      "source": "git"
+    }
+  ],
+  "claims": [
+    {
+      "id": "tests-python-312",
+      "title": "Full Python 3.12 suite passed",
+      "detail": "Sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
+      "status": "verified",
+      "source": "agent",
+      "evidenceIds": [
+        "unittest-python-312"
+      ]
+    },
+    {
+      "id": "launch-packaging",
+      "title": "Launch packaging changed",
+      "detail": "The diff adds the CLI, README, license, docs, CI workflow, and packaged standalone skill; this claim intentionally describes change rather than verification.",
+      "status": "changed",
+      "source": "agent",
+      "evidenceIds": []
+    },
+    {
+      "id": "hosted-ci",
+      "title": "Hosted OS matrix was not observed",
+      "detail": "Ubuntu, macOS, and Windows jobs are configured, but this local report does not claim a hosted GitHub Actions result.",
+      "status": "not_observed",
+      "source": "agent",
+      "evidenceIds": []
+    }
+  ],
+  "evidence": [
+    {
+      "id": "unittest-python-312",
+      "kind": "command",
+      "label": "Full Python 3.12 unittest suite",
+      "source": "tool",
+      "producedAtRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+      "worktreeFingerprint": "clean",
+      "command": "python -m unittest discover -s tests -v",
+      "exitCode": 0,
+      "capturedAt": "2026-08-22T12:43:28+09:00"
+    },
+    {
+      "id": "launch-before",
+      "kind": "capture",
+      "label": "Imported skill repository",
+      "source": "tool",
+      "producedAtRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
+      "worktreeFingerprint": "unknown",
+      "historical": true,
+      "capturedAt": "2026-08-22T12:43:28+09:00",
+      "path": "assets/launch-before.png",
+      "reviewed": true,
+      "reviewer": {
+        "source": "agent",
+        "name": "Codex release review"
+      },
+      "alt": "The demo-before repository shown as nine loose skill files with no CLI entry points.",
+      "sha256": "8d603f14544bf95b59fec82304c13d129fc5f8db3d02ce22f9011b4d113623fb"
+    },
+    {
+      "id": "launch-after",
+      "kind": "capture",
+      "label": "Packaged release repository",
+      "source": "tool",
+      "producedAtRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+      "worktreeFingerprint": "clean",
+      "capturedAt": "2026-08-22T12:43:28+09:00",
+      "path": "assets/launch-after.png",
+      "reviewed": true,
+      "reviewer": {
+        "source": "agent",
+        "name": "Codex release review"
+      },
+      "alt": "The release-candidate repository shown with CLI, skill, tests, CI, documentation, and package metadata.",
+      "sha256": "bed52b1365a52dbc2bab9f03d77c790842b59e31cb79a9a3f6856160a2494a6d"
+    }
+  ],
+  "inventory": {
+    "files": [
+      {
+        "status": "A",
+        "path": ".github/workflows/ci.yml",
+        "added": 29,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": ".gitignore",
+        "added": 8,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "LICENSE",
+        "added": 21,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "README.md",
+        "added": 85,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "SKILL.md",
+        "added": 0,
+        "deleted": 48,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "agents/openai.yaml",
+        "added": 0,
+        "deleted": 4,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "assets/report-template.html",
+        "added": 0,
+        "deleted": 72,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "docs/launch-todo.md",
+        "added": 8,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "docs/limitations.md",
+        "added": 11,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "docs/report-contract.md",
+        "added": 7,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "docs/threat-model.md",
+        "added": 18,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "pyproject.toml",
+        "added": 59,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "references/report-contract.md",
+        "added": 0,
+        "deleted": 106,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "scripts/accept_progress.py",
+        "added": 0,
+        "deleted": 171,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "scripts/collect_progress.py",
+        "added": 0,
+        "deleted": 329,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "scripts/render_progress.py",
+        "added": 0,
+        "deleted": 568,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "scripts/test_collect_progress.py",
+        "added": 0,
+        "deleted": 74,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "D",
+        "path": "scripts/test_render_progress.py",
+        "added": 0,
+        "deleted": 142,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/SKILL.md",
+        "added": 48,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/agents/openai.yaml",
+        "added": 4,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/assets/report-template.html",
+        "added": 72,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/references/report-contract.md",
+        "added": 106,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/scripts/accept_progress.py",
+        "added": 171,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/scripts/collect_progress.py",
+        "added": 329,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "skills/visualize-project-progress/scripts/render_progress.py",
+        "added": 568,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/__init__.py",
+        "added": 6,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/__main__.py",
+        "added": 9,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/_demo.py",
+        "added": 250,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/_skill_loader.py",
+        "added": 68,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/accept.py",
+        "added": 28,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/cli.py",
+        "added": 49,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/collect.py",
+        "added": 28,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "src/progress_receipt/render.py",
+        "added": 28,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tests/test_accept_progress.py",
+        "added": 191,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tests/test_cli.py",
+        "added": 38,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tests/test_collect_progress.py",
+        "added": 140,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tests/test_package_layout.py",
+        "added": 33,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tests/test_render_progress.py",
+        "added": 211,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "tools/generate_self_report.py",
+        "added": 329,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      }
+    ],
+    "totalFiles": 39,
+    "omittedFiles": 0,
+    "filesTruncated": false,
+    "commits": [
+      {
+        "sha": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+        "subject": "fix: align visual comparison labels with their captures",
+        "authoredAt": "2026-08-22T12:43:10+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "db2d0a4723ad809883c6ce9cdcc3852e5d374f1c",
+        "subject": "fix: prioritize launch files in the comparison capture",
+        "authoredAt": "2026-08-22T12:41:15+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "04154ee526506643d5b6ed8bdebac22741293056",
+        "subject": "fix: keep self-report captures within the frame",
+        "authoredAt": "2026-08-22T12:40:23+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "7de8371e146c3f10bcedd2fd9d8ce2ab6781a1a0",
+        "subject": "build: add reproducible launch self-report generator",
+        "authoredAt": "2026-08-22T12:38:37+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "0231d9c797695637b2c5470b72262f34281fc1f8",
+        "subject": "feat: build the progress-receipt CLI and standalone skill",
+        "authoredAt": "2026-08-22T12:35:49+09:00",
+        "source": "git"
+      }
+    ],
+    "totalCommits": 5,
+    "omittedCommits": 0,
+    "commitsTruncated": false,
+    "linesAdded": 2952,
+    "linesDeleted": 1514
+  },
+  "qualityGate": {
+    "status": "passed",
+    "browserQa": {
+      "completed": true,
+      "source": "agent",
+      "viewports": [
+        "desktop",
+        "mobile",
+        "dark"
+      ]
+    }
+  },
+  "privacy": {
+    "textSanitized": true,
+    "capturesReviewed": true
+  },
+  "collection": {
+    "source": "tool",
+    "maxFiles": 200,
+    "maxCommits": 50
+  }
+}

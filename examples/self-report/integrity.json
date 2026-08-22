@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "htmlSha256": "71e10cc82b0ba0fd541c1022a3920844f9f689f2a3c692a2f53945aeb85adc5c",
+  "manifestSha256": "c1f864cb215cf0e7d4e2e0902901dd6a7d972aa4472cc80008844c8987f67755",
+  "assets": {
+    "assets/launch-after.png": "bed52b1365a52dbc2bab9f03d77c790842b59e31cb79a9a3f6856160a2494a6d",
+    "assets/launch-before.png": "8d603f14544bf95b59fec82304c13d129fc5f8db3d02ce22f9011b4d113623fb"
+  }
+}
