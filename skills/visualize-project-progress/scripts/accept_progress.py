@@ -39,6 +39,28 @@ def state_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
+def verify_capture_hashes(payload: dict[str, Any], report: Path) -> None:
+    """Require every published capture to agree with the integrity receipt.
+
+    The receipt and the manifest are hashed independently, so a hand-assembled
+    report could pass both while its manifest advertised a capture hash that no
+    published asset actually has.
+    """
+    integrity = read_json(report / "integrity.json")
+    published = integrity.get("assets")
+    if not isinstance(published, dict):
+        raise AcceptError("Report integrity receipt is invalid")
+    for item in payload.get("evidence", []):
+        if not isinstance(item, dict) or item.get("kind") != "capture":
+            continue
+        path = item.get("path")
+        digest = item.get("sha256")
+        if not isinstance(path, str) or not isinstance(digest, str):
+            raise AcceptError("Published capture evidence is missing its path or hash")
+        if published.get(path) != digest:
+            raise AcceptError("Published capture evidence does not match the integrity receipt")
+
+
 def verify_integrity(report: Path) -> None:
     integrity = read_json(report / "integrity.json")
     if integrity.get("schemaVersion") != 1:
@@ -94,7 +116,7 @@ def atomic_json(path: Path, payload: dict[str, Any]) -> None:
             os.unlink(temporary)
 
 
-def accept(repo: Path, report: Path, state_path: Path, branch_key: str | None) -> None:
+def accept(repo: Path, report: Path, state_path: Path, branch_key: str | None, reset_baseline: bool = False) -> None:
     repo = repo.resolve()
     report = report.resolve()
     manifest_path = report / "manifest.json"
@@ -107,6 +129,7 @@ def accept(repo: Path, report: Path, state_path: Path, branch_key: str | None) -
         validate_manifest(payload, manifest_path)
     except RenderError as exc:
         raise AcceptError(f"Report manifest is invalid: {exc}") from exc
+    verify_capture_hashes(payload, report)
     report_data = payload["report"]
     gate = payload["qualityGate"]
     if report_data["status"] not in {"verified", "blocked"}:
@@ -136,16 +159,26 @@ def accept(repo: Path, report: Path, state_path: Path, branch_key: str | None) -
     )
     if payload["inventory"] != expected_inventory:
         raise AcceptError("Published Git inventory does not match the repository range")
+    diverged_from: str | None = None
     if previous is not None:
         if not isinstance(previous, dict) or report_base != previous.get("toRef"):
-            raise AcceptError("Report baseline does not match the last accepted state")
-    state["branches"][key] = {
+            if not reset_baseline:
+                raise AcceptError(
+                    "Report baseline does not match the last accepted state; "
+                    "re-run with --reset-baseline to record an intentional divergence"
+                )
+            recorded = previous.get("toRef") if isinstance(previous, dict) else None
+            diverged_from = recorded if isinstance(recorded, str) else "unknown"
+    entry = {
         "repositoryId": repo_id,
         "branch": branch,
         "toRef": head,
         "acceptedAt": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
         "report": sanitize_text(str(report)),
     }
+    if diverged_from is not None:
+        entry["divergedFrom"] = diverged_from
+    state["branches"][key] = entry
     atomic_json(state_path, state)
 
 
@@ -155,13 +188,18 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--report", required=True)
     result.add_argument("--state", required=True)
     result.add_argument("--branch-key")
+    result.add_argument(
+        "--reset-baseline",
+        action="store_true",
+        help="Advance a branch whose accepted baseline was rewritten, recording the divergence in state",
+    )
     return result
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
-        accept(Path(args.repo), Path(args.report), Path(args.state), args.branch_key)
+        accept(Path(args.repo), Path(args.report), Path(args.state), args.branch_key, args.reset_baseline)
     except (AcceptError, ProgressError, subprocess.SubprocessError) as exc:
         raise SystemExit(f"progress acceptance failed: {exc}") from exc
     return 0

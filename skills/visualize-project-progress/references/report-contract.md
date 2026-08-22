@@ -24,6 +24,8 @@ Rendering validates evidence and publishes `index.html` plus a manifest snapshot
 - Publication records each reviewed capture's SHA-256 in both its evidence item and the integrity receipt; acceptance requires the exact asset set and bytes reviewed.
 - A blocked report requires at least one blocked claim bound to fresh non-historical evidence. A failed command may truthfully evidence a blocker but can never verify a successful claim.
 - `qualityGate.status: passed` means evidence integrity and browser QA are complete. It does not mean every project outcome succeeded; a truthful report may have `report.status: blocked` and advance the baseline so the same observed blocker is not reported as new work forever. Incomplete pipeline execution cannot advance the baseline.
+- Acceptance normally requires `range.fromRef` to equal the branch's last accepted `toRef`. After a rebase or force-push that ref no longer exists, so `--reset-baseline` accepts the new range and records the abandoned ref as `divergedFrom` in the state entry.
+- Acceptance also requires each published capture's manifest `sha256` to equal the hash recorded for that asset in `integrity.json`.
 - Publication writes `index.html`, a sanitized manifest snapshot, copied assets, and `integrity.json` atomically. Acceptance rejects any report file that no longer matches this receipt.
 - Rendering derives Git metrics, omission counts, truncation flags, and the capture-review badge from validated machine data. Acceptance re-collects the exact Git range and rejects any published inventory that differs.
 

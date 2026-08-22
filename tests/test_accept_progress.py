@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -153,6 +154,40 @@ class AcceptanceTests(unittest.TestCase):
 
         with self.assertRaisesRegex(accept_progress.AcceptError, "last accepted state"):
             accept_progress.accept(repo, report, state_path, None)
+
+    def test_reset_baseline_records_an_intentional_divergence(self) -> None:
+        root, repo, base, head = self.make_repo()
+        manifest, report = self.build_report(root, repo, base, head)
+        key = f'{manifest["repository"]["id"]}:main'
+        state_path = root / "state.json"
+        rewritten = "0" * 40
+        state_path.write_text(
+            json.dumps({"schemaVersion": 1, "branches": {key: {"toRef": rewritten}}}),
+            encoding="utf-8",
+        )
+
+        accept_progress.accept(repo, report, state_path, None, reset_baseline=True)
+
+        entry = json.loads(state_path.read_text(encoding="utf-8"))["branches"][key]
+        self.assertEqual(head, entry["toRef"])
+        self.assertEqual(rewritten, entry["divergedFrom"])
+
+    def test_acceptance_rejects_a_capture_hash_the_receipt_does_not_have(self) -> None:
+        root, repo, base, head = self.make_repo()
+        _, report = self.build_report(root, repo, base, head, capture=True)
+        integrity_path = report / "integrity.json"
+        manifest_path = report / "manifest.json"
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for item in payload["evidence"]:
+            if item["kind"] == "capture":
+                item["sha256"] = "f" * 64
+        manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        integrity = json.loads(integrity_path.read_text(encoding="utf-8"))
+        integrity["manifestSha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        integrity_path.write_text(json.dumps(integrity, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+        with self.assertRaisesRegex(accept_progress.AcceptError, "does not match the integrity receipt"):
+            accept_progress.accept(repo, report, root / "state.json", None)
 
     def test_acceptance_handles_detached_head_with_explicit_branch_key(self) -> None:
         root, repo, base, head = self.make_repo()

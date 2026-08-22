@@ -43,6 +43,7 @@ Turn a project work cycle into a self-contained HTML report. Treat a code diff a
 - Keep collection bounded and show omissions in the report rather than hiding truncation.
 - Do not run remote deployments, publish externally, or broaden access merely to obtain evidence.
 - Never advance the accepted baseline when collection, rendering, QA, or acceptance fails.
+- When history was rewritten and the recorded baseline is gone, collect with an explicit `--base` and accept with `--reset-baseline`. Acceptance then records `divergedFrom` in state so the rewrite stays visible instead of being silently absorbed.
 - A truthfully observed blocked project outcome may advance the baseline when it has a blocked claim, fresh evidence, and passed QA. This records progress without calling the outcome successful; pipeline failure or an incomplete report never advances it.
 
 Default to an ignored `.progress/` directory after checking repository policy. Publish under `docs/` only when the user explicitly requests a versioned report.
