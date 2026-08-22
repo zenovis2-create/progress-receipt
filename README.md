@@ -48,6 +48,8 @@ Claim states stay deliberately separate:
 - `blocked`: a fresh observation records why an outcome could not complete.
 - `not_observed`: the report makes the missing observation visible.
 
+`report.status: verified` is compatible with blocked claims: it says the evidence shown in the report was successfully validated, not that every outcome is known or unblocked.
+
 These are receipts, not proofs. Exit code zero does not establish semantic correctness. Agent-authored narrative is not independent verification. Sanitization is best-effort and is not a secrecy guarantee. Screenshots are human/agent reviewed rather than automatically sanitized. “Verified” means fresh linked evidence passed this contract, not that the software is formally correct. Read the full [limitations](docs/limitations.md), [threat model](docs/threat-model.md), and [report contract](skills/visualize-project-progress/references/report-contract.md).
 
 ## CLI

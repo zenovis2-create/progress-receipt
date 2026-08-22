@@ -14,3 +14,5 @@
 - Acceptance requires the report's baseline to be the branch's last accepted head. After a rebase or force-push that ref is gone; `accept --reset-baseline` is the supported way forward and records the abandoned ref as `divergedFrom` rather than hiding the rewrite.
 - Repository identity is derived from the set of root commits reachable from HEAD. Merging in an unrelated history changes that identity, and the branch's accepted baseline will no longer be found under the new key.
 - `progress-receipt demo` writes its report to a temporary directory that it does not clean up; pass `--output DIR` to control where it lands.
+
+A `verified` report can still include `blocked` claims. The report-level label says its presented evidence cleared the contract; it does not promise that every investigated outcome completed or that no unknowns remain.

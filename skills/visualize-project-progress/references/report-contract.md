@@ -29,6 +29,8 @@ Rendering validates evidence and publishes `index.html` plus a manifest snapshot
 - Publication writes `index.html`, a sanitized manifest snapshot, copied assets, and `integrity.json` atomically. Acceptance rejects any report file that no longer matches this receipt.
 - Rendering derives Git metrics, omission counts, truncation flags, and the capture-review badge from validated machine data. Acceptance re-collects the exact Git range and rejects any published inventory that differs.
 
+Report status describes the evidence package, not an aggregate of its claim statuses. A report with `report.status: verified` may therefore contain `blocked` claims when each blocker is stated truthfully and bound to fresh evidence.
+
 ## Enrichment example
 
 ```json
