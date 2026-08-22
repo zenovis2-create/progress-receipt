@@ -9,12 +9,12 @@ Receipts for AI coding: a shareable report of what changed, what passed, what fa
 ## Try the zero-config demo
 
 ```console
-uvx progress-receipt demo
+uvx --from . progress-receipt demo
 ```
 
 The command creates a Git fixture in a temporary directory, runs the real collect → render → accept pipeline, and prints an absolute path to a report you can open. It makes no network calls, reads no files from your project, and runs its fixture with your Git configuration deliberately out of the way, so a global `commit.gpgsign` or `core.hooksPath` cannot change the result. It finishes in about two seconds.
 
-Add `--output DIR` to keep the report somewhere permanent, `--open` to launch it in your browser, or `--quiet` to print only the path. Until the package is published to PyPI, run the checkout directly with `uvx --from . progress-receipt demo`.
+Add `--output DIR` to keep the report somewhere permanent, `--open` to launch it in your browser, or `--quiet` to print only the path. After the package is published to PyPI, the shorter `uvx progress-receipt demo` form will run the same command.
 
 ## Install the Agent Skill
 
