@@ -78,6 +78,8 @@ python -m pip wheel . --no-deps --wheel-dir dist
 uvx --from . progress-receipt demo
 ```
 
+The committed launch receipt is reproducible from a clean release-candidate commit with `python tools/generate_self_report.py --output <outside-repo-directory>`. It deliberately renders outside the checkout so the collected worktree fingerprint stays unchanged; copy the sealed directory into `examples/self-report/` only after review and acceptance.
+
 CI runs the full suite and demo on Ubuntu, macOS, and Windows with Python 3.11, 3.12, and 3.13. Release work still requiring external publication is listed in [`docs/launch-todo.md`](docs/launch-todo.md).
 
 MIT licensed. See [LICENSE](LICENSE).
