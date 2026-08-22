@@ -575,7 +575,19 @@ def publish(manifest_path: Path, template_path: Path, output: Path) -> None:
             "assets": dict(sorted(asset_hashes.items())),
         }
         (stage / "integrity.json").write_text(json.dumps(integrity, indent=2) + "\n", encoding="utf-8", newline="\n")
-        os.replace(stage, output)
+        # mkdtemp creates the staging directory 0700. A report is meant to be
+        # handed to someone else, so relax it to the process umask before it is
+        # published; this is a no-op on Windows.
+        umask = os.umask(0)
+        os.umask(umask)
+        os.chmod(stage, 0o777 & ~umask)
+        if assets.is_dir():
+            os.chmod(assets, 0o777 & ~umask)
+        try:
+            os.replace(stage, output)
+        except OSError as exc:
+            # The output can appear between the existence check and the publish.
+            raise RenderError(f"Report directory could not be published: {output}") from exc
     finally:
         if stage.exists():
             shutil.rmtree(stage)
