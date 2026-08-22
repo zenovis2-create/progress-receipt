@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-22T12:43:28+09:00",
+  "generatedAt": "2026-08-22T13:31:29+09:00",
   "repository": {
     "id": "c53e5937eb3ecc464e6cd04e005c8dacc9fe96d8b2c161ba79f066d16aea522d",
     "label": "progress-receipt",
-    "branch": "packaging",
+    "branch": "improvements",
     "detached": false,
     "worktreeFingerprint": "clean",
     "source": "git"
   },
   "range": {
     "fromRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
-    "toRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+    "toRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
     "source": "git"
   },
   "report": {
-    "title": "progress-receipt v0.1.0 launch receipt",
+    "title": "progress-receipt launch receipt",
     "lang": "en",
     "status": "verified",
     "outcome": {
@@ -23,15 +23,15 @@
       "source": "agent"
     },
     "before": {
-      "text": "The repository contained a SKILL.md, three loose scripts, a template, and seven focused tests.",
+      "text": "The repository contained a SKILL.md, three loose scripts, a template, and 7 test functions across 9 tracked files, with no CLI.",
       "source": "agent"
     },
     "after": {
-      "text": "The release adds package metadata, four CLI commands, standalone skill distribution, trust coverage, CI, and launch documentation.",
+      "text": "The release adds package metadata, 4 CLI subcommands, standalone skill distribution, 53 test functions across 37 tracked files, CI, and launch documentation.",
       "source": "agent"
     },
     "scope": {
-      "text": "Repository changes from demo-before through the v0.1.0 release candidate.",
+      "text": "Repository changes from the c415de5a7bbe import through the 92dfddc07122 release candidate. Hosted CI, PyPI publication, and non-local platforms are out of scope.",
       "source": "agent"
     },
     "highlights": [
@@ -44,6 +44,11 @@
         "text": "The Python 3.12 test command is recorded as tool evidence with its real exit code.",
         "source": "agent",
         "status": "verified"
+      },
+      {
+        "text": "The declared Python 3.10 floor is checked by running the suite on 3.10, not by asserting it.",
+        "source": "agent",
+        "status": "blocked"
       }
     ],
     "visualComparisons": [
@@ -61,17 +66,17 @@
   "metrics": [
     {
       "label": "Changed files",
-      "value": 39,
+      "value": 46,
       "source": "git"
     },
     {
       "label": "Commits",
-      "value": 5,
+      "value": 14,
       "source": "git"
     },
     {
       "label": "Lines added",
-      "value": 2952,
+      "value": 4139,
       "source": "git"
     },
     {
@@ -82,13 +87,23 @@
   ],
   "claims": [
     {
-      "id": "tests-python-312",
+      "id": "tests-local-python",
       "title": "Full Python 3.12 suite passed",
-      "detail": "Sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
+      "detail": "53 test functions covering sanitization, evidence freshness, acceptance, tampering, path boundaries, truncation, packaging, and end-to-end behavior passed locally.",
       "status": "verified",
       "source": "agent",
       "evidenceIds": [
-        "unittest-python-312"
+        "unittest-local-python"
+      ]
+    },
+    {
+      "id": "python-floor",
+      "title": "Declared Python 3.10 floor could not be exercised",
+      "detail": "pyproject.toml declares requires-python >= 3.10. The check ran on this machine and its real exit code is attached; a non-zero code means no 3.10 interpreter was available, so the floor remains an untested claim here.",
+      "status": "blocked",
+      "source": "agent",
+      "evidenceIds": [
+        "unittest-python-310"
       ]
     },
     {
@@ -110,15 +125,26 @@
   ],
   "evidence": [
     {
-      "id": "unittest-python-312",
+      "id": "unittest-local-python",
       "kind": "command",
       "label": "Full Python 3.12 unittest suite",
       "source": "tool",
-      "producedAtRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
       "worktreeFingerprint": "clean",
-      "command": "python -m unittest discover -s tests -v",
+      "command": "python3.12 -m unittest discover -s tests -v",
       "exitCode": 0,
-      "capturedAt": "2026-08-22T12:43:28+09:00"
+      "capturedAt": "2026-08-22T13:31:29+09:00"
+    },
+    {
+      "id": "unittest-python-310",
+      "kind": "command",
+      "label": "Suite on the declared minimum interpreter",
+      "source": "tool",
+      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+      "worktreeFingerprint": "clean",
+      "command": "py -3.10 -m unittest discover -s tests",
+      "exitCode": 9009,
+      "capturedAt": "2026-08-22T13:31:29+09:00"
     },
     {
       "id": "launch-before",
@@ -128,36 +154,44 @@
       "producedAtRef": "c415de5a7bbe259128b7048277f912d99ffd9d45",
       "worktreeFingerprint": "unknown",
       "historical": true,
-      "capturedAt": "2026-08-22T12:43:28+09:00",
+      "capturedAt": "2026-08-22T13:31:29+09:00",
       "path": "assets/launch-before.png",
       "reviewed": true,
       "reviewer": {
         "source": "agent",
-        "name": "Codex release review"
+        "name": "Claude Opus 5 self-report review"
       },
-      "alt": "The demo-before repository shown as nine loose skill files with no CLI entry points.",
-      "sha256": "8d603f14544bf95b59fec82304c13d129fc5f8db3d02ce22f9011b4d113623fb"
+      "alt": "The imported repository shown as 9 tracked files with 0 CLI subcommands and 7 test functions.",
+      "sha256": "2dc72494bc8038348925ce6e60d12104c0dae311ad398db0a416c529dcf1ea26"
     },
     {
       "id": "launch-after",
       "kind": "capture",
       "label": "Packaged release repository",
       "source": "tool",
-      "producedAtRef": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
+      "producedAtRef": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
       "worktreeFingerprint": "clean",
-      "capturedAt": "2026-08-22T12:43:28+09:00",
+      "capturedAt": "2026-08-22T13:31:29+09:00",
       "path": "assets/launch-after.png",
       "reviewed": true,
       "reviewer": {
         "source": "agent",
-        "name": "Codex release review"
+        "name": "Claude Opus 5 self-report review"
       },
-      "alt": "The release-candidate repository shown with CLI, skill, tests, CI, documentation, and package metadata.",
-      "sha256": "bed52b1365a52dbc2bab9f03d77c790842b59e31cb79a9a3f6856160a2494a6d"
+      "alt": "The release-candidate repository shown as 37 tracked files with 4 CLI subcommands and 53 test functions.",
+      "sha256": "fc6329d20c9bddd89777fbe84362af94583d0ea3b2324532fefc906a1f76238a"
     }
   ],
   "inventory": {
     "files": [
+      {
+        "status": "A",
+        "path": ".gitattributes",
+        "added": 9,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
       {
         "status": "A",
         "path": ".github/workflows/ci.yml",
@@ -169,7 +203,7 @@
       {
         "status": "A",
         "path": ".gitignore",
-        "added": 8,
+        "added": 9,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -185,7 +219,7 @@
       {
         "status": "A",
         "path": "README.md",
-        "added": 85,
+        "added": 87,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -225,7 +259,7 @@
       {
         "status": "A",
         "path": "docs/limitations.md",
-        "added": 11,
+        "added": 16,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -240,8 +274,56 @@
       },
       {
         "status": "A",
+        "path": "docs/report-preview.png",
+        "added": null,
+        "deleted": null,
+        "binary": true,
+        "source": "git"
+      },
+      {
+        "status": "A",
         "path": "docs/threat-model.md",
         "added": 18,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "examples/self-report/assets/launch-after.png",
+        "added": null,
+        "deleted": null,
+        "binary": true,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "examples/self-report/assets/launch-before.png",
+        "added": null,
+        "deleted": null,
+        "binary": true,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "examples/self-report/index.html",
+        "added": 72,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "examples/self-report/integrity.json",
+        "added": 9,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "examples/self-report/manifest.json",
+        "added": 536,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -305,7 +387,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/SKILL.md",
-        "added": 48,
+        "added": 49,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -329,7 +411,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/references/report-contract.md",
-        "added": 106,
+        "added": 109,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -337,7 +419,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/scripts/accept_progress.py",
-        "added": 171,
+        "added": 209,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -345,7 +427,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/scripts/collect_progress.py",
-        "added": 329,
+        "added": 374,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -353,7 +435,7 @@
       {
         "status": "A",
         "path": "skills/visualize-project-progress/scripts/render_progress.py",
-        "added": 568,
+        "added": 602,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -377,7 +459,7 @@
       {
         "status": "A",
         "path": "src/progress_receipt/_demo.py",
-        "added": 250,
+        "added": 315,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -401,7 +483,7 @@
       {
         "status": "A",
         "path": "src/progress_receipt/cli.py",
-        "added": 49,
+        "added": 65,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -425,7 +507,7 @@
       {
         "status": "A",
         "path": "tests/test_accept_progress.py",
-        "added": 191,
+        "added": 232,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -433,7 +515,7 @@
       {
         "status": "A",
         "path": "tests/test_cli.py",
-        "added": 38,
+        "added": 119,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -441,7 +523,7 @@
       {
         "status": "A",
         "path": "tests/test_collect_progress.py",
-        "added": 140,
+        "added": 244,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -457,7 +539,7 @@
       {
         "status": "A",
         "path": "tests/test_render_progress.py",
-        "added": 211,
+        "added": 250,
         "deleted": 0,
         "binary": false,
         "source": "git"
@@ -465,16 +547,70 @@
       {
         "status": "A",
         "path": "tools/generate_self_report.py",
-        "added": 329,
+        "added": 415,
         "deleted": 0,
         "binary": false,
         "source": "git"
       }
     ],
-    "totalFiles": 39,
+    "totalFiles": 46,
     "omittedFiles": 0,
     "filesTruncated": false,
     "commits": [
+      {
+        "sha": "92dfddc071224dfc09ab129069d8cdc45abe7f47",
+        "subject": "fix: count self-report test functions wherever the modules live",
+        "authoredAt": "2026-08-22T13:31:11+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "4692fa03ae1b746ec4bc71b05d27e6ed9ca17bdd",
+        "subject": "fix: do not crash the self-report when python3.10 is not on PATH",
+        "authoredAt": "2026-08-22T13:30:03+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "42b13973219212b4952a93c52054e0fc7fe2989a",
+        "subject": "docs: disclose what the tool actually enforces, and test the 3.10 floor",
+        "authoredAt": "2026-08-22T13:29:21+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "b1ce18fc7beff0a1c3a8682a5d01516905a01fc4",
+        "subject": "fix: make the demo deterministic and give it a real first impression",
+        "authoredAt": "2026-08-22T13:23:44+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "d689416bce57997c06c0b6c2e0694a6cc07cc8bf",
+        "subject": "improve: close two acceptance gaps",
+        "authoredAt": "2026-08-22T13:18:22+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "4834570ad1755a8b11dc2490f9f3271f33e5142f",
+        "subject": "fix: make capture paths portable and verify capture bytes",
+        "authoredAt": "2026-08-22T13:16:07+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "e81a55289b2569c0b1b047775fe0fc7fba28297e",
+        "subject": "fix: bind the worktree fingerprint to staged content",
+        "authoredAt": "2026-08-22T13:13:19+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "bf1309c24dd5560adac74a55ef64433800a0e6c6",
+        "subject": "fix: close sanitizer false negatives and false positives",
+        "authoredAt": "2026-08-22T13:11:33+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "a389525b01936b9d15b23da804566668613387c9",
+        "subject": "v0.1.0: package as progress-receipt (CLI + skill + self-report)",
+        "authoredAt": "2026-08-22T12:46:35+09:00",
+        "source": "git"
+      },
       {
         "sha": "547753f67dc0cfe8793ac0b3fda680b75c91f1a0",
         "subject": "fix: align visual comparison labels with their captures",
@@ -506,10 +642,10 @@
         "source": "git"
       }
     ],
-    "totalCommits": 5,
+    "totalCommits": 14,
     "omittedCommits": 0,
     "commitsTruncated": false,
-    "linesAdded": 2952,
+    "linesAdded": 4139,
     "linesDeleted": 1514
   },
   "qualityGate": {
