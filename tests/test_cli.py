@@ -67,7 +67,7 @@ class DemoCommandTests(unittest.TestCase):
         result, out, _ = self.run_demo("--output", str(destination))
 
         self.assertEqual(0, result)
-        self.assertEqual(destination / "index.html", Path(out.strip()))
+        self.assertEqual(destination / "index.html", Path(out.strip()).resolve())
         self.assertEqual(
             {"index.html", "manifest.json", "integrity.json", "assets"},
             {entry.name for entry in destination.iterdir()},
