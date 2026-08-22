@@ -6,10 +6,12 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
 
-import render_progress
+from progress_receipt import render as render_progress
+from progress_receipt._skill_loader import skill_root
 
 
 SHA_A = "a" * 40
@@ -67,7 +69,7 @@ class RenderProgressTests(unittest.TestCase):
         manifest_path = root / "manifest.json"
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         output = root / "report"
-        template = Path(render_progress.__file__).parent.parent / "assets" / "report-template.html"
+        template = skill_root() / "assets" / "report-template.html"
         render_progress.publish(manifest_path, template, output)
         return output, (output / "index.html").read_text(encoding="utf-8"), temp
 
@@ -136,6 +138,72 @@ class RenderProgressTests(unittest.TestCase):
             (root / "after.png").write_bytes(PNG_1X1)
             with self.assertRaisesRegex(render_progress.RenderError, "layout is invalid"):
                 render_progress.validate_manifest(manifest, root / "manifest.json")
+
+    def test_verified_claim_rejects_stale_evidence(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"][0]["producedAtRef"] = SHA_A
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(render_progress.RenderError, "uses stale evidence"):
+                render_progress.validate_manifest(manifest, Path(temp) / "manifest.json")
+
+    def test_verified_claim_rejects_changed_worktree_fingerprint(self) -> None:
+        manifest = base_manifest()
+        manifest["repository"]["worktreeFingerprint"] = "1" * 64
+        manifest["evidence"][0]["worktreeFingerprint"] = "2" * 64
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(render_progress.RenderError, "different worktree"):
+                render_progress.validate_manifest(manifest, Path(temp) / "manifest.json")
+
+    def test_capture_rejects_parent_path_traversal(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"].append(capture("outside", "../outside.png"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            manifest_dir = root / "manifest"
+            manifest_dir.mkdir()
+            (root / "outside.png").write_bytes(PNG_1X1)
+            with self.assertRaisesRegex(render_progress.RenderError, "local relative image path"):
+                render_progress.validate_manifest(manifest, manifest_dir / "manifest.json")
+
+    def test_capture_rejects_symlink_that_escapes_manifest_directory(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"].append(capture("linked", "linked.png"))
+        with tempfile.TemporaryDirectory() as temp, tempfile.TemporaryDirectory() as outside:
+            root = Path(temp)
+            target = Path(outside) / "outside.png"
+            target.write_bytes(PNG_1X1)
+            try:
+                (root / "linked.png").symlink_to(target)
+            except OSError as exc:
+                if os.name != "nt":
+                    self.skipTest(f"file symlinks are unavailable: {exc}")
+                junction = root / "linked"
+                subprocess.run(
+                    ["cmd", "/c", "mklink", "/J", str(junction), str(Path(outside))],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                manifest["evidence"][-1]["path"] = "linked/outside.png"
+            with self.assertRaisesRegex(render_progress.RenderError, "escapes the manifest directory"):
+                render_progress.validate_manifest(manifest, root / "manifest.json")
+
+    def test_render_discloses_bounded_inventory_truncation(self) -> None:
+        manifest = base_manifest()
+        manifest["inventory"] = {
+            "files": [{"status": "M", "path": "shown.txt", "added": 1, "deleted": 0, "binary": False, "source": "git"}],
+            "commits": [],
+            "totalFiles": 3,
+            "totalCommits": 0,
+            "linesAdded": 3,
+            "linesDeleted": 0,
+        }
+
+        _, html, temp = self.publish(manifest)
+        self.addCleanup(temp.cleanup)
+
+        self.assertIn("showing 1 of 3 files", html)
+        self.assertIn("2 omitted", html)
 
 
 if __name__ == "__main__":
