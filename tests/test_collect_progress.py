@@ -103,6 +103,75 @@ class SanitizerTests(unittest.TestCase):
             sanitized,
         )
 
+    def test_private_addresses_with_ports_are_redacted(self) -> None:
+        self.assertEqual(
+            "server <PRIVATE_ADDRESS>:8080 web http://<PRIVATE_ADDRESS>:3000/x db <PRIVATE_ADDRESS>:5432",
+            collect_progress.sanitize_text(
+                "server 10.0.0.1:8080 web http://192.168.1.5:3000/x db 127.0.0.1:5432"
+            ),
+        )
+
+    def test_ipv4_mapped_ipv6_addresses_are_redacted(self) -> None:
+        self.assertEqual("mapped <PRIVATE_ADDRESS> end", collect_progress.sanitize_text("mapped ::ffff:10.0.0.1 end"))
+
+    def test_public_addresses_and_version_strings_survive(self) -> None:
+        self.assertEqual(
+            "dns 8.8.8.8 release 1.2.3.4 build 2.39.1.1 at 12:30",
+            collect_progress.sanitize_text("dns 8.8.8.8 release 1.2.3.4 build 2.39.1.1 at 12:30"),
+        )
+
+    def test_quoted_secret_values_are_redacted_whole(self) -> None:
+        self.assertEqual('password=<REDACTED> done', collect_progress.sanitize_text('password: "hunter 2" done'))
+
+    def test_secret_assignment_does_not_span_lines(self) -> None:
+        self.assertEqual("password:\nnext line", collect_progress.sanitize_text("password:\nnext line"))
+
+    def test_words_that_merely_start_with_a_secret_keyword_survive(self) -> None:
+        self.assertEqual(
+            "tokenizer = tokenize(text) passwordless=true secretary:jane",
+            collect_progress.sanitize_text("tokenizer = tokenize(text) passwordless=true secretary:jane"),
+        )
+
+    def test_bare_vendor_credentials_are_redacted(self) -> None:
+        samples = {
+            "sk-ant-api03-AAAAbbbbCCCCddddEEEEffff1234",
+            "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+            "github_pat_ABCDEFGHIJKLMNOPQRSTUV_wxyz0123456789",
+            "AKIAIOSFODNN7EXAMPLE",
+            "xoxb-123456789012-abcdefghijklmnop",
+            "glpat-ABCDEFGHIJKLMNOPQRST",
+            "AIzaSyA1234567890abcdefghijklmnopqrstuv",
+            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I",
+        }
+        for sample in samples:
+            with self.subTest(sample=sample):
+                self.assertEqual("token <REDACTED> end", collect_progress.sanitize_text(f"token {sample} end"))
+
+    def test_url_credentials_are_redacted(self) -> None:
+        self.assertEqual(
+            "clone https://user:<REDACTED>@example.com/repo.git",
+            collect_progress.sanitize_text("clone https://user:s3cr3t-pw@example.com/repo.git"),
+        )
+
+    def test_basic_authorization_values_are_redacted(self) -> None:
+        self.assertEqual(
+            "Authorization: Basic <REDACTED>",
+            collect_progress.sanitize_text("Authorization: Basic dXNlcjpwYXNzd29yZA=="),
+        )
+
+    def test_sanitization_is_idempotent(self) -> None:
+        raw = (
+            "api_key=abc123 Bearer xyz.123 10.0.0.1:8080 ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
+            "https://user:pw@example.com -----BEGIN RSA PRIVATE KEY-----"
+        )
+        once = collect_progress.sanitize_text(raw)
+        self.assertEqual(once, collect_progress.sanitize_text(once))
+
+    def test_degenerate_home_values_are_not_substituted(self) -> None:
+        with mock.patch.dict(collect_progress.os.environ, {"HOME": "/", "USERPROFILE": "C:\\"}, clear=False):
+            with mock.patch.object(collect_progress.Path, "home", staticmethod(lambda: Path("/"))):
+                self.assertEqual("a/b/c", collect_progress.sanitize_text("a/b/c"))
+
     def test_home_paths_are_redacted_in_native_and_slash_forms(self) -> None:
         home = str(Path.home())
         sanitized = collect_progress.sanitize_text(f"native {home} slash {home.replace(chr(92), '/')}")

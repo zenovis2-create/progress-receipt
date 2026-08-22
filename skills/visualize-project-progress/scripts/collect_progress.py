@@ -15,11 +15,35 @@ from typing import Any
 
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
-ADDRESS = re.compile(r"(?<![0-9A-Fa-f:.])(?:[0-9A-Fa-f]*:[0-9A-Fa-f:.]+|(?:\d{1,3}\.){3}\d{1,3})(?![0-9A-Fa-f:.])")
-SECRET = re.compile(r"(?i)\b([A-Za-z0-9_-]*(?:api[_-]?key|access[_-]?token|token|password|secret)[A-Za-z0-9_-]*)\s*[:=]\s*[^\s,;]+")
-SECRET_FLAG = re.compile(r"(?i)(--(?:api[_-]?key|access[_-]?token|token|password|secret)\s+)(?:\"[^\"]*\"|'[^']*'|\S+)")
-BEARER = re.compile(r"(?i)\b(Bearer)\s+[A-Za-z0-9._~+/-]+=*")
+# IPv6 is matched first so that IPv4-mapped forms such as ``::ffff:10.0.0.1`` are
+# consumed whole; the IPv4 pattern deliberately permits a trailing ``:`` so that
+# ``10.0.0.1:8080`` and ``http://192.168.1.5:3000`` are still redacted.
+IPV6 = re.compile(r"(?<![0-9A-Fa-f:.])[0-9A-Fa-f]*:[0-9A-Fa-f:.]+(?![0-9A-Fa-f:.])")
+IPV4 = re.compile(r"(?<![0-9A-Fa-f.])(?:\d{1,3}\.){3}\d{1,3}(?![0-9A-Za-z.])")
+# The secret keyword must end a word component: ``password`` and ``api_keys`` are
+# secrets, ``tokenizer`` and ``passwordless`` are not.
+SECRET_WORD = r"(?:api[_-]?key|access[_-]?token|token|password|passwd|secret)s?(?![A-Za-z])"
+SECRET_VALUE = r"(?:\"[^\"\n]*\"|'[^'\n]*'|[^\s,;]+)"
+SECRET = re.compile(rf"(?i)\b([A-Za-z0-9_-]*{SECRET_WORD})[ \t]*[:=][ \t]*{SECRET_VALUE}")
+SECRET_FLAG = re.compile(rf"(?i)(--{SECRET_WORD}[ \t]+){SECRET_VALUE}")
+BEARER = re.compile(r"(?i)\b(Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*")
 PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
+# Credentials that carry no key name and would otherwise survive as bare words.
+CREDENTIAL = re.compile(
+    r"\b("
+    r"sk-ant-[A-Za-z0-9_-]{16,}"
+    r"|sk-(?:proj-|live-|test-)?[A-Za-z0-9]{20,}"
+    r"|gh[pousr]_[A-Za-z0-9]{20,}"
+    r"|github_pat_[A-Za-z0-9_]{20,}"
+    r"|glpat-[A-Za-z0-9_-]{16,}"
+    r"|xox[abeoprs]-[A-Za-z0-9-]{10,}"
+    r"|A(?:KIA|SIA)[0-9A-Z]{16}"
+    r"|AIza[A-Za-z0-9_-]{35}"
+    r"|npm_[A-Za-z0-9]{36}"
+    r"|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"
+    r")"
+)
+URL_CREDENTIAL = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://[^/\s:@]+:)[^/\s@]+@")
 
 
 class ProgressError(RuntimeError):
@@ -77,17 +101,33 @@ def branch_name(repo: Path, branch_key: str | None = None) -> tuple[str, bool]:
     return sanitize_text(branch_key), True
 
 
+def home_paths() -> list[str]:
+    """Return home directories worth redacting, longest first.
+
+    Very short values such as ``/`` or ``C:\\`` are ignored: substituting them
+    would corrupt every path in the report without hiding anything private.
+    """
+    try:
+        candidates = {str(Path.home())}
+    except (OSError, RuntimeError):
+        candidates = set()
+    candidates.update({os.environ.get("USERPROFILE", ""), os.environ.get("HOME", "")})
+    usable = {item.rstrip("\\/") for item in candidates if item}
+    return sorted((item for item in usable if len(item) >= 4), key=len, reverse=True)
+
+
 def sanitize_text(value: Any) -> str:
     text = str(value).replace("\x00", "�")
     text = "".join(character if character in "\n\t" or ord(character) >= 32 else "�" for character in text)
-    homes = {str(Path.home()), os.environ.get("USERPROFILE", ""), os.environ.get("HOME", "")}
-    for home in sorted((item for item in homes if item), key=len, reverse=True):
+    for home in home_paths():
         text = re.sub(re.escape(home), "<HOME>", text, flags=re.IGNORECASE)
         text = re.sub(re.escape(home.replace("\\", "/")), "<HOME>", text, flags=re.IGNORECASE)
     text = PRIVATE_KEY.sub("<PRIVATE_KEY_REDACTED>", text)
+    text = URL_CREDENTIAL.sub(lambda match: f"{match.group(1)}<REDACTED>@", text)
     text = SECRET.sub(lambda match: f"{match.group(1)}=<REDACTED>", text)
     text = SECRET_FLAG.sub(lambda match: f"{match.group(1)}<REDACTED>", text)
     text = BEARER.sub(lambda match: f"{match.group(1)} <REDACTED>", text)
+    text = CREDENTIAL.sub("<REDACTED>", text)
 
     def replace_address(match: re.Match[str]) -> str:
         candidate = match.group(0)
@@ -101,7 +141,7 @@ def sanitize_text(value: Any) -> str:
             return "<PRIVATE_ADDRESS>"
         return candidate
 
-    return ADDRESS.sub(replace_address, text)
+    return IPV4.sub(replace_address, IPV6.sub(replace_address, text))
 
 
 def load_state(path: Path, repo_id: str, branch: str) -> str:
