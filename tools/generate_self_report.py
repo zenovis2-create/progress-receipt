@@ -79,8 +79,8 @@ def surface_html(ref: str, files: list[str], before: bool) -> str:
         if path in {"README.md", "pyproject.toml", ".github/workflows/ci.yml"}
         or path.startswith(("src/", "skills/", "tests/", "docs/"))
     ]
-    rows = "".join(f"<li><code>{escape(path)}</code></li>" for path in selected[:18])
-    omitted = max(0, len(selected) - 18)
+    rows = "".join(f"<li><code>{escape(path)}</code></li>" for path in selected[:12])
+    omitted = max(0, len(selected) - 12)
     omission = f"<p class=omitted>+ {omitted} more launch files</p>" if omitted else ""
     accent = "#64748b" if before else "#0f8a62"
     return f"""<!doctype html>
