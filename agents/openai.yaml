@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visualize Project Progress"
+  short_description: "See project changes, proof, and blockers at a glance"
+  default_prompt: "Use $visualize-project-progress to compare the last accepted baseline with the current project and build a verified visual progress report."
