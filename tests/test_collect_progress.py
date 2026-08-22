@@ -17,11 +17,20 @@ def git(repo: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=repo, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-def legacy_worktree_fingerprint(repo: Path) -> str:
+def unbatched_worktree_fingerprint(repo: Path) -> str:
+    """Recompute the fingerprint one ``hash-object`` call at a time.
+
+    The batched implementation must agree with this straightforward form; only
+    the number of Git invocations differs.
+    """
     status = collect_progress.run_git(repo, "status", "--porcelain=v1", "-z", "--untracked-files=all").stdout
     if not status:
         return "clean"
     digest = hashlib.sha256(status)
+    staged = collect_progress.run_git(
+        repo, "diff-index", "--cached", "--no-renames", "-z", "HEAD", "--", allow_failure=True
+    )
+    digest.update(staged.stdout if staged.returncode == 0 else b"<no-head>")
     paths = collect_progress.run_git(repo, "ls-files", "-m", "-o", "--exclude-standard", "-z").stdout.decode("utf-8", "replace").split("\0")
     for path in sorted(item for item in paths if item):
         digest.update(path.encode("utf-8", "replace"))
@@ -42,19 +51,45 @@ class WorktreeFingerprintTests(unittest.TestCase):
         git(repo, "commit", "--quiet", "-m", "initial")
         return temp, repo
 
-    def test_batch_fingerprint_matches_legacy_and_is_content_stable(self) -> None:
+    def test_batch_fingerprint_matches_unbatched_and_is_content_stable(self) -> None:
         temp, repo = self.make_repo()
         self.addCleanup(temp.cleanup)
         (repo / "tracked.txt").write_text("after\n", encoding="utf-8")
         (repo / "-leading & unicode 名.txt").write_text("untracked\n", encoding="utf-8")
 
-        expected = legacy_worktree_fingerprint(repo)
+        expected = unbatched_worktree_fingerprint(repo)
         actual = collect_progress.worktree_fingerprint(repo)
         self.assertEqual(expected, actual)
         self.assertEqual(actual, collect_progress.worktree_fingerprint(repo))
 
         (repo / "-leading & unicode 名.txt").write_text("changed content\n", encoding="utf-8")
         self.assertNotEqual(actual, collect_progress.worktree_fingerprint(repo))
+
+    def test_staged_content_changes_the_fingerprint(self) -> None:
+        temp, repo = self.make_repo()
+        self.addCleanup(temp.cleanup)
+
+        (repo / "tracked.txt").write_text("staged A\n", encoding="utf-8")
+        git(repo, "add", "tracked.txt")
+        staged_a = collect_progress.worktree_fingerprint(repo)
+        (repo / "tracked.txt").write_text("staged B\n", encoding="utf-8")
+        git(repo, "add", "tracked.txt")
+        staged_b = collect_progress.worktree_fingerprint(repo)
+        (repo / "tracked.txt").write_text("staged A\n", encoding="utf-8")
+        git(repo, "add", "tracked.txt")
+
+        self.assertNotEqual(staged_a, staged_b)
+        self.assertEqual(staged_a, collect_progress.worktree_fingerprint(repo))
+
+    def test_fingerprint_works_before_the_first_commit(self) -> None:
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        repo = Path(temp.name)
+        git(repo, "init", "--quiet")
+        (repo / "new.txt").write_text("unborn\n", encoding="utf-8")
+        git(repo, "add", "new.txt")
+
+        self.assertRegex(collect_progress.worktree_fingerprint(repo), r"^[0-9a-f]{64}$")
 
     def test_many_changed_paths_use_one_hash_object_batch(self) -> None:
         temp, repo = self.make_repo()

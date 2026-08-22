@@ -173,6 +173,11 @@ def worktree_fingerprint(repo: Path) -> str:
     if not status:
         return "clean"
     digest = hashlib.sha256(status)
+    # Porcelain status reports only that a path is staged, not which bytes were
+    # staged, so two different staged contents would otherwise share a
+    # fingerprint. diff-index contributes the staged blob IDs directly.
+    staged = run_git(repo, "diff-index", "--cached", "--no-renames", "-z", "HEAD", "--", allow_failure=True)
+    digest.update(staged.stdout if staged.returncode == 0 else b"<no-head>")
     paths = run_git(repo, "ls-files", "-m", "-o", "--exclude-standard", "-z").stdout.decode("utf-8", "replace").split("\0")
     changed_paths = sorted(item for item in paths if item)
     content_hashes = hash_worktree_paths(repo, changed_paths)
