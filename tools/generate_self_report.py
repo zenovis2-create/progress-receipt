@@ -73,14 +73,32 @@ def surface_html(ref: str, files: list[str], before: bool) -> str:
     )
     entry_points = 0 if before else 4
     tests = 7 if before else 29
-    selected = files if before else [
-        path
-        for path in files
-        if path in {"README.md", "pyproject.toml", ".github/workflows/ci.yml"}
-        or path.startswith(("src/", "skills/", "tests/", "docs/"))
-    ]
-    rows = "".join(f"<li><code>{escape(path)}</code></li>" for path in selected[:12])
-    omitted = max(0, len(selected) - 12)
+    if before:
+        selected = files
+    else:
+        launch_files = [
+            path
+            for path in files
+            if path in {"README.md", "pyproject.toml", ".github/workflows/ci.yml"}
+            or path.startswith(("src/", "skills/", "tests/", "docs/"))
+        ]
+        priority = [
+            "README.md",
+            "pyproject.toml",
+            ".github/workflows/ci.yml",
+            "src/progress_receipt/cli.py",
+            "src/progress_receipt/_demo.py",
+            "skills/visualize-project-progress/SKILL.md",
+            "skills/visualize-project-progress/scripts/collect_progress.py",
+            "tests/test_accept_progress.py",
+            "tests/test_cli.py",
+            "docs/threat-model.md",
+            "docs/limitations.md",
+        ]
+        selected = [path for path in priority if path in launch_files]
+        selected.extend(path for path in launch_files if path not in selected)
+    rows = "".join(f"<li><code>{escape(path)}</code></li>" for path in selected[:11])
+    omitted = max(0, len(selected) - 11)
     omission = f"<p class=omitted>+ {omitted} more launch files</p>" if omitted else ""
     accent = "#64748b" if before else "#0f8a62"
     return f"""<!doctype html>
