@@ -2,7 +2,7 @@
 
 Receipts for AI coding: a shareable report of what changed, what passed, what failed, and what nobody checked.
 
-![A progress-receipt self-report showing evidence-backed project states](docs/report-preview.png)
+![Demo: run progress-receipt, compare before and after, then inspect claims and evidence](docs/demo.gif)
 
 [View the live self-report](examples/self-report/index.html) generated from this repository’s own `demo-before..HEAD` launch work. The committed report also exposes its [sanitized manifest](examples/self-report/manifest.json) and [integrity receipt](examples/self-report/integrity.json); GitHub Pages publication is tracked in [the launch checklist](docs/launch-todo.md).
 
