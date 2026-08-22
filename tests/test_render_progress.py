@@ -102,6 +102,7 @@ class RenderProgressTests(unittest.TestCase):
         self.assertIn('aria-controls="comparison-hud"', html)
         self.assertIn('class="comparison-stage layout-landscape"', html)
         self.assertIn('class="comparison-stage layout-portrait"', html)
+        self.assertIn("clip-path:inset(0 0 0 var(--split))", html)
         self.assertIn("HUD &lt;script&gt;alert(1)&lt;/script&gt;", html)
         self.assertNotIn("HUD <script>", html)
         self.assertNotIn("https://", html)
