@@ -7,7 +7,7 @@ from html import escape
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import tempfile
@@ -53,9 +53,34 @@ def validate_source(value: Any, label: str) -> str:
     return str(value)
 
 
+def image_kind(path: Path) -> str | None:
+    """Return the image format implied by the file's leading bytes."""
+    try:
+        with path.open("rb") as stream:
+            header = stream.read(12)
+    except OSError:
+        return None
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if header.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
 def checked_capture_path(manifest_path: Path, raw_path: Any) -> Path:
-    value = Path(require_text(raw_path, "capture path"))
-    if value.is_absolute() or ".." in value.parts or value.suffix.lower() not in IMAGE_EXTENSIONS:
+    raw = require_text(raw_path, "capture path")
+    # Interpret capture paths as POSIX on every platform: a manifest written on
+    # Linux must resolve the same way on Windows. Backslashes, drive letters,
+    # NTFS stream separators, and rooted paths are rejected outright rather than
+    # being left to platform-specific path semantics.
+    if "\\" in raw or ":" in raw or raw.startswith("/"):
+        raise RenderError("Capture path must be a relative POSIX path without drive letters")
+    value = PurePosixPath(raw)
+    if not value.parts or any(part in {"", ".", ".."} for part in value.parts):
+        raise RenderError("Capture path must be a local relative image path")
+    if value.suffix.lower() not in IMAGE_EXTENSIONS:
         raise RenderError("Capture path must be a local relative image path")
     root = manifest_path.parent.resolve()
     resolved = (root / value).resolve()
@@ -65,6 +90,15 @@ def checked_capture_path(manifest_path: Path, raw_path: Any) -> Path:
         raise RenderError("Capture path escapes the manifest directory") from exc
     if not resolved.is_file():
         raise RenderError("Capture file does not exist")
+    kind = image_kind(resolved)
+    if kind is None:
+        raise RenderError("Capture file is not a PNG, JPEG, or WebP image")
+    if kind == "png" and value.suffix.lower() != ".png":
+        raise RenderError("Capture file extension does not match its image format")
+    if kind == "jpeg" and value.suffix.lower() not in {".jpg", ".jpeg"}:
+        raise RenderError("Capture file extension does not match its image format")
+    if kind == "webp" and value.suffix.lower() != ".webp":
+        raise RenderError("Capture file extension does not match its image format")
     return resolved
 
 

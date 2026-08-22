@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 from pathlib import Path
 import subprocess
@@ -11,6 +12,11 @@ from progress_receipt import accept as accept_progress
 from progress_receipt import collect as collect_progress
 from progress_receipt import render as render_progress
 from progress_receipt._skill_loader import skill_root
+
+
+PNG_1X1 = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
 
 
 def git(repo: Path, *args: str) -> str:
@@ -98,7 +104,7 @@ class AcceptanceTests(unittest.TestCase):
         ]
         if capture:
             source = root / "capture.png"
-            source.write_bytes(b"reviewed fixture image")
+            source.write_bytes(PNG_1X1)
             manifest["evidence"].append(
                 {
                     "id": "capture",
@@ -181,7 +187,7 @@ class AcceptanceTests(unittest.TestCase):
     def test_acceptance_rejects_tampered_capture(self) -> None:
         root, repo, base, head = self.make_repo()
         _, report = self.build_report(root, repo, base, head, capture=True)
-        (report / "assets" / "capture.png").write_bytes(b"tampered image")
+        (report / "assets" / "capture.png").write_bytes(PNG_1X1 + b"tampered")
 
         with self.assertRaisesRegex(accept_progress.AcceptError, "assets do not match"):
             accept_progress.accept(repo, report, root / "state.json", None)

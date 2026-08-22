@@ -189,6 +189,45 @@ class RenderProgressTests(unittest.TestCase):
             with self.assertRaisesRegex(render_progress.RenderError, "escapes the manifest directory"):
                 render_progress.validate_manifest(manifest, root / "manifest.json")
 
+    def test_capture_rejects_windows_style_and_rooted_paths(self) -> None:
+        for raw in ("assets\\before.png", "C:before.png", "C:/data/before.png", "/etc/before.png", "before.png:stream"):
+            with self.subTest(raw=raw):
+                manifest = base_manifest()
+                manifest["evidence"].append(capture("odd", raw))
+                with tempfile.TemporaryDirectory() as temp:
+                    root = Path(temp)
+                    (root / "before.png").write_bytes(PNG_1X1)
+                    with self.assertRaises(render_progress.RenderError):
+                        render_progress.validate_manifest(manifest, root / "manifest.json")
+
+    def test_capture_accepts_a_relative_subdirectory_path(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"].append(capture("nested", "shots/before.png"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "shots").mkdir()
+            (root / "shots" / "before.png").write_bytes(PNG_1X1)
+            captures = render_progress.validate_manifest(manifest, root / "manifest.json")
+            self.assertEqual((root / "shots" / "before.png").resolve(), captures["nested"])
+
+    def test_capture_rejects_a_file_that_is_not_an_image(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"].append(capture("fake", "fake.png"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "fake.png").write_bytes(b"<html>not an image</html>")
+            with self.assertRaisesRegex(render_progress.RenderError, "not a PNG, JPEG, or WebP"):
+                render_progress.validate_manifest(manifest, root / "manifest.json")
+
+    def test_capture_rejects_an_extension_that_contradicts_the_bytes(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"].append(capture("mismatch", "shot.jpg"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "shot.jpg").write_bytes(PNG_1X1)
+            with self.assertRaisesRegex(render_progress.RenderError, "does not match its image format"):
+                render_progress.validate_manifest(manifest, root / "manifest.json")
+
     def test_render_discloses_bounded_inventory_truncation(self) -> None:
         manifest = base_manifest()
         manifest["inventory"] = {

@@ -39,7 +39,7 @@ Turn a project work cycle into a self-contained HTML report. Treat a code diff a
 - A verified claim requires linked evidence; command evidence must have `exitCode: 0`.
 - Sanitize manifest text. Never claim pixels are sanitized. A capture requires `reviewed: true`, reviewer provenance, and useful alt text.
 - Visual comparisons may reference only reviewed capture evidence. Historical captures may use `worktreeFingerprint: unknown` only together with `historical: true`; they remain contextual and cannot alone verify current work.
-- Use local reviewed images only. Do not interpolate manifest data into scripts, styles, raw HTML, links, or unquoted attributes.
+- Use local reviewed images only, referenced by a POSIX-relative path under the manifest directory (no backslashes, drive letters, or leading `/`). The bytes must actually be PNG, JPEG, or WebP. Do not interpolate manifest data into scripts, styles, raw HTML, links, or unquoted attributes.
 - Keep collection bounded and show omissions in the report rather than hiding truncation.
 - Do not run remote deployments, publish externally, or broaden access merely to obtain evidence.
 - Never advance the accepted baseline when collection, rendering, QA, or acceptance fails.

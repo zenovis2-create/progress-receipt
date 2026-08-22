@@ -20,6 +20,7 @@ Rendering validates evidence and publishes `index.html` plus a manifest snapshot
 - Historical evidence may set `worktreeFingerprint` to `unknown` only when `historical: true`. Fresh and other non-historical evidence must use `clean` or a 64-character lowercase fingerprint.
 - Command evidence includes `command`, integer `exitCode`, and `capturedAt`.
 - Capture evidence uses a relative local `.png`, `.jpg`, `.jpeg`, or `.webp` path, plus `reviewed: true`, a `reviewer` with `agent` or `human` provenance, and descriptive `alt` text.
+- Capture paths are POSIX-relative on every platform so one manifest resolves identically on Linux, macOS, and Windows. Backslashes, drive letters, colons, leading `/`, `.`, and `..` segments are rejected. The file's leading bytes must match a PNG, JPEG, or WebP signature and must agree with the declared extension.
 - Publication records each reviewed capture's SHA-256 in both its evidence item and the integrity receipt; acceptance requires the exact asset set and bytes reviewed.
 - A blocked report requires at least one blocked claim bound to fresh non-historical evidence. A failed command may truthfully evidence a blocker but can never verify a successful claim.
 - `qualityGate.status: passed` means evidence integrity and browser QA are complete. It does not mean every project outcome succeeded; a truthful report may have `report.status: blocked` and advance the baseline so the same observed blocker is not reported as new work forever. Incomplete pipeline execution cannot advance the baseline.

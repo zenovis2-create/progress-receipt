@@ -6,3 +6,4 @@ __pycache__/
 .progress/
 build/
 dist/
+.venv*/
