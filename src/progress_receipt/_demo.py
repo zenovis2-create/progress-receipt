@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -17,8 +19,37 @@ import zlib
 from ._skill_loader import load_skill_script, skill_root
 
 
+# The fixture must contain the same bytes on every platform: without this the
+# text files would be written with CRLF on Windows, and `git diff --check`
+# (the demo's one verified command) would report trailing whitespace unless the
+# user happened to have core.autocrlf enabled.
+LF = "\n"
+STATUS_ORDER = ("verified", "changed", "blocked", "not_observed")
+
+
 class DemoError(RuntimeError):
     pass
+
+
+def _isolated_git_env() -> dict[str, str]:
+    """Run the fixture's Git with the user's own configuration out of the way.
+
+    A global ``commit.gpgsign``, ``core.hooksPath``, or commit template would
+    otherwise make a zero-config demo fail on someone else's machine.
+    """
+    environment = dict(os.environ)
+    environment.update(
+        {
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_SYSTEM": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_ATTR_NOSYSTEM": "1",
+        }
+    )
+    for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_TEMPLATE_DIR"):
+        environment.pop(name, None)
+    return environment
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -30,6 +61,7 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=30,
+            env=_isolated_git_env(),
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise DemoError(f"Git could not create the canned demo: {args[0]}") from exc
@@ -80,14 +112,14 @@ def _create_fixture(repo: Path) -> tuple[str, str]:
     _git(repo, "branch", "-M", "main")
     _git(repo, "config", "user.name", "Progress Receipt Demo")
     _git(repo, "config", "user.email", "demo@example.invalid")
-    (repo / "README.md").write_text("# Canned dashboard\n\nStatus: draft\n", encoding="utf-8")
-    (repo / "dashboard.txt").write_text("checks: pending\ncoverage: not observed\n", encoding="utf-8")
+    (repo / "README.md").write_text("# Canned dashboard\n\nStatus: draft\n", encoding="utf-8", newline=LF)
+    (repo / "dashboard.txt").write_text("checks: pending\ncoverage: not observed\n", encoding="utf-8", newline=LF)
     base = _commit(repo, "Create the baseline dashboard")
-    (repo / "README.md").write_text("# Canned dashboard\n\nStatus: reviewable\n", encoding="utf-8")
-    (repo / "dashboard.txt").write_text("checks: passed\ncoverage: not observed\n", encoding="utf-8")
-    (repo / "receipt.txt").write_text("changed + verified + blocked + not_observed\n", encoding="utf-8")
+    (repo / "README.md").write_text("# Canned dashboard\n\nStatus: reviewable\n", encoding="utf-8", newline=LF)
+    (repo / "dashboard.txt").write_text("checks: passed\ncoverage: not observed\n", encoding="utf-8", newline=LF)
+    (repo / "receipt.txt").write_text("changed + verified + blocked + not_observed\n", encoding="utf-8", newline=LF)
     _commit(repo, "Add evidence-aware progress states")
-    (repo / "sharing.txt").write_text("self-contained report\n", encoding="utf-8")
+    (repo / "sharing.txt").write_text("self-contained report\n", encoding="utf-8", newline=LF)
     head = _commit(repo, "Prepare a shareable progress receipt")
     return base, head
 
@@ -219,12 +251,40 @@ def _enrich(manifest: dict[str, Any], workspace: Path, base: str, head: str, rep
     }
 
 
-def build_demo() -> Path:
+def summarize(manifest: dict[str, Any]) -> list[str]:
+    """Describe the generated receipt in a few reviewable lines."""
+    claims = manifest["claims"]
+    counts = {status: sum(1 for claim in claims if claim["status"] == status) for status in STATUS_ORDER}
+    commands = [item for item in manifest["evidence"] if item["kind"] == "command"]
+    captures = [item for item in manifest["evidence"] if item["kind"] == "capture"]
+    inventory = manifest["inventory"]
+    range_data = manifest["range"]
+    lines = [
+        "canned Git fixture · no network · no project files · nothing installed",
+        "  claims     " + " · ".join(f"{counts[status]} {status}" for status in STATUS_ORDER),
+        f"  range      {range_data['fromRef'][:12]}..{range_data['toRef'][:12]} on "
+        f"{manifest['repository']['branch']} · {inventory['totalFiles']} files · {inventory['totalCommits']} commits",
+    ]
+    for index, item in enumerate(commands):
+        label = "  evidence  " if index == 0 else "            "
+        lines.append(f"{label} {item['label']}: exit {item['exitCode']}")
+    lines.append(f"             {len(captures)} reviewed captures, copied and hashed into the report")
+    lines.append(
+        f"  report     status {manifest['report']['status']} · QA {manifest['qualityGate']['status']}"
+        " · index.html + manifest.json + integrity.json + assets/"
+    )
+    return lines
+
+
+def build_demo(destination: Path | None = None) -> tuple[Path, dict[str, Any]]:
+    """Render and accept the canned report; return its index and manifest."""
     if shutil.which("git") is None:
         raise DemoError("Git is required")
     collector = load_skill_script("collect_progress")
     renderer = load_skill_script("render_progress")
     accepter = load_skill_script("accept_progress")
+    if destination is not None and destination.exists():
+        raise DemoError(f"Output already exists: {destination.resolve()}")
     workspace = Path(tempfile.mkdtemp(prefix="progress-receipt-demo-")).resolve()
     repo = workspace / "fixture"
     try:
@@ -242,9 +302,14 @@ def build_demo() -> Path:
         manifest = collector.build_manifest(args)
         _enrich(manifest, workspace, base, head, repo)
         collector.atomic_json(draft_path, manifest)
-        report = workspace / "report"
+        report = workspace / "report" if destination is None else destination.resolve()
         renderer.publish(draft_path, skill_root() / "assets" / "report-template.html", report)
         accepter.accept(repo, report, workspace / "state.json", None)
+        published = json.loads((report / "manifest.json").read_text(encoding="utf-8"))
     except Exception as exc:
         raise DemoError(str(exc)) from exc
-    return report / "index.html"
+    if destination is not None:
+        # The report now lives outside the scratch directory, so nothing in it
+        # is worth leaving behind.
+        shutil.rmtree(workspace, ignore_errors=True)
+    return report / "index.html", published
