@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Release distributions
 
 on:
   push:
@@ -9,19 +9,43 @@ permissions:
   contents: read
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@e797f845c14029ab22cd858fb168b1b26a123285 # v6
         with:
           python-version: "3.12"
-      - name: Build sdist and wheel
+      - name: Build and test distributions
         run: |
           python -m pip install --upgrade build
           python -m build
+          python -m pip install dist/*.whl
+          python -c 'import os, progress_receipt; assert os.environ["GITHUB_REF_NAME"] == "v" + progress_receipt.__version__'
+          python -m unittest discover -s tests -v
+          python -m progress_receipt demo --quiet
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --generate-notes --verify-tag
+      - name: Check optional PyPI credentials
+        id: pypi
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -n "$PYPI_TOKEN" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::PyPI publication skipped: PYPI_TOKEN is not configured. GitHub release assets are available."
+            echo "PyPI publication was NOT performed: PYPI_TOKEN is not configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Publish to PyPI
-        uses: pypa/upload-action@79aeeb7dbcc06f8ec69947dcd81541a9b12dc798 # v1
+        if: steps.pypi.outputs.configured == 'true'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
-          distribution-dir: dist
+          packages-dir: dist
           password: ${{ secrets.PYPI_TOKEN }}

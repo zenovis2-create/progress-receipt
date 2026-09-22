@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-22T18:18:44+09:00",
+  "repository": {
+    "id": "82cd1eee9a5d1f33e6deb2203d434efc9a82114ba6f48c83101f521102f90ea5",
+    "label": "fixture",
+    "branch": "main",
+    "detached": false,
+    "worktreeFingerprint": "clean",
+    "source": "git"
+  },
+  "range": {
+    "fromRef": "746670bff650474902a3a65b83e1749de76b4f1a",
+    "toRef": "b00cfd96af3513f809397ee0327ae7fa57c38d90",
+    "source": "git"
+  },
+  "report": {
+    "title": "Progress receipt demo",
+    "lang": "en",
+    "status": "blocked",
+    "outcome": {
+      "text": "A canned project now has a shareable receipt separating passed checks, changed work, blockers, and unobserved surfaces.",
+      "source": "agent"
+    },
+    "before": {
+      "text": "The dashboard listed work but carried no evidence states.",
+      "source": "agent"
+    },
+    "after": {
+      "text": "The report binds a passing command to one claim and keeps every other state explicit.",
+      "source": "agent"
+    },
+    "scope": {
+      "text": "Privacy-safe local demo repository; no network or user files.",
+      "source": "agent"
+    },
+    "highlights": [
+      {
+        "text": "Narrative claims in this demo are agent-authored, not independent verification.",
+        "source": "agent",
+        "status": "changed"
+      },
+      {
+        "text": "Git inventory and command exit codes retain their machine provenance.",
+        "source": "agent",
+        "status": "verified"
+      }
+    ],
+    "visualComparisons": [
+      {
+        "id": "dashboard",
+        "title": "Canned dashboard",
+        "detail": "A reviewed illustration of the fixture before and after evidence states were added.",
+        "source": "agent",
+        "status": "changed",
+        "beforeEvidenceId": "dashboard-before",
+        "afterEvidenceId": "dashboard-after"
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "label": "Changed files",
+      "value": 4,
+      "source": "git"
+    },
+    {
+      "label": "Commits",
+      "value": 2,
+      "source": "git"
+    },
+    {
+      "label": "Lines added",
+      "value": 4,
+      "source": "git"
+    },
+    {
+      "label": "Lines removed",
+      "value": 2,
+      "source": "git"
+    }
+  ],
+  "claims": [
+    {
+      "id": "diff-check",
+      "title": "Repository diff check passed",
+      "detail": "Git found no whitespace errors in the canned change range.",
+      "status": "verified",
+      "source": "agent",
+      "evidenceIds": [
+        "git-diff-check"
+      ]
+    },
+    {
+      "id": "shareable-report",
+      "title": "Shareable report was added",
+      "detail": "The fixture changed to include a self-contained progress receipt.",
+      "status": "changed",
+      "source": "agent",
+      "evidenceIds": []
+    },
+    {
+      "id": "browser-matrix",
+      "title": "Browser matrix is blocked",
+      "detail": "The canned repository intentionally has no browser-matrix artifact.",
+      "status": "blocked",
+      "source": "agent",
+      "evidenceIds": [
+        "missing-browser-matrix"
+      ]
+    },
+    {
+      "id": "safari",
+      "title": "Safari was not observed",
+      "detail": "The offline demo does not claim a Safari result.",
+      "status": "not_observed",
+      "source": "agent",
+      "evidenceIds": []
+    }
+  ],
+  "evidence": [
+    {
+      "id": "git-diff-check",
+      "kind": "command",
+      "label": "Git diff check",
+      "source": "tool",
+      "producedAtRef": "b00cfd96af3513f809397ee0327ae7fa57c38d90",
+      "worktreeFingerprint": "clean",
+      "command": "git diff --check 746670bff650474902a3a65b83e1749de76b4f1a..b00cfd96af3513f809397ee0327ae7fa57c38d90",
+      "exitCode": 0,
+      "capturedAt": "2026-09-22T18:18:44+09:00"
+    },
+    {
+      "id": "missing-browser-matrix",
+      "kind": "command",
+      "label": "Browser matrix lookup",
+      "source": "tool",
+      "producedAtRef": "b00cfd96af3513f809397ee0327ae7fa57c38d90",
+      "worktreeFingerprint": "clean",
+      "command": "git show HEAD:qa/browser-matrix.txt",
+      "exitCode": 128,
+      "capturedAt": "2026-09-22T18:18:44+09:00"
+    },
+    {
+      "id": "dashboard-before",
+      "kind": "capture",
+      "label": "Dashboard before",
+      "source": "tool",
+      "producedAtRef": "746670bff650474902a3a65b83e1749de76b4f1a",
+      "worktreeFingerprint": "unknown",
+      "historical": true,
+      "capturedAt": "2026-09-22T18:18:44+09:00",
+      "path": "assets/dashboard-before.png",
+      "reviewed": true,
+      "reviewer": {
+        "source": "agent",
+        "name": "progress-receipt canned fixture"
+      },
+      "alt": "Canned dashboard before evidence states were present.",
+      "sha256": "b14819e2ae88f07ef8d3f4122f09d07ef219b990b992001aaa2fed6dec721d9b"
+    },
+    {
+      "id": "dashboard-after",
+      "kind": "capture",
+      "label": "Dashboard after",
+      "source": "tool",
+      "producedAtRef": "b00cfd96af3513f809397ee0327ae7fa57c38d90",
+      "worktreeFingerprint": "clean",
+      "capturedAt": "2026-09-22T18:18:44+09:00",
+      "path": "assets/dashboard-after.png",
+      "reviewed": true,
+      "reviewer": {
+        "source": "agent",
+        "name": "progress-receipt canned fixture"
+      },
+      "alt": "Canned dashboard after verified, changed, blocked, and not-observed states were separated.",
+      "sha256": "aa90e83e68ffaeb0b5f1b12b9b10b6d42b4f21ae8cdbc906f5e64b56a24744c3"
+    }
+  ],
+  "inventory": {
+    "files": [
+      {
+        "status": "M",
+        "path": "README.md",
+        "added": 1,
+        "deleted": 1,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "M",
+        "path": "dashboard.txt",
+        "added": 1,
+        "deleted": 1,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "receipt.txt",
+        "added": 1,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      },
+      {
+        "status": "A",
+        "path": "sharing.txt",
+        "added": 1,
+        "deleted": 0,
+        "binary": false,
+        "source": "git"
+      }
+    ],
+    "totalFiles": 4,
+    "omittedFiles": 0,
+    "filesTruncated": false,
+    "commits": [
+      {
+        "sha": "b00cfd96af3513f809397ee0327ae7fa57c38d90",
+        "subject": "Prepare a shareable progress receipt",
+        "authoredAt": "2026-09-22T18:18:39+09:00",
+        "source": "git"
+      },
+      {
+        "sha": "6ff904638883d8fe7afa20cf72dba246ac75ddde",
+        "subject": "Add evidence-aware progress states",
+        "authoredAt": "2026-09-22T18:18:39+09:00",
+        "source": "git"
+      }
+    ],
+    "totalCommits": 2,
+    "omittedCommits": 0,
+    "commitsTruncated": false,
+    "linesAdded": 4,
+    "linesDeleted": 2
+  },
+  "qualityGate": {
+    "status": "passed",
+    "browserQa": {
+      "completed": true,
+      "source": "agent",
+      "viewports": [
+        "desktop",
+        "mobile",
+        "dark"
+      ]
+    }
+  },
+  "privacy": {
+    "textSanitized": true,
+    "capturesReviewed": true
+  },
+  "collection": {
+    "source": "tool",
+    "maxFiles": 200,
+    "maxCommits": 50
+  }
+}

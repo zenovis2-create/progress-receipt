@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import unittest
 
-from progress_receipt import accept, collect, render
+from progress_receipt import accept, collect, render, summary
 from progress_receipt._skill_loader import skill_root
 
 
@@ -16,6 +16,7 @@ class PackageLayoutTests(unittest.TestCase):
             "collect_progress.py": collect._IMPLEMENTATION,
             "render_progress.py": render._IMPLEMENTATION,
             "accept_progress.py": accept._IMPLEMENTATION,
+            "summary_progress.py": summary._IMPLEMENTATION,
         }
         for filename, module in implementations.items():
             with self.subTest(filename=filename):
@@ -56,6 +57,15 @@ class CommittedSelfReportTests(unittest.TestCase):
         for relative, digest in integrity["assets"].items():
             with self.subTest(asset=relative):
                 self.assertEqual(digest, hashlib.sha256((report / relative).read_bytes()).hexdigest())
+
+    def test_committed_summary_demo_and_companion_match_the_receipt(self) -> None:
+        examples = Path(__file__).resolve().parents[1] / "examples"
+        report = examples / "summary-demo"
+        if not report.is_dir():
+            self.skipTest("the summary demo is not present in this distribution")
+        accept.verify_integrity(report)
+        digest = hashlib.sha256((report / "manifest.json").read_bytes()).hexdigest()
+        self.assertIn(digest, (examples / "pr-summary.md").read_text(encoding="utf-8"))
 
     def test_committed_self_report_demonstrates_every_claim_state(self) -> None:
         report = self.report()

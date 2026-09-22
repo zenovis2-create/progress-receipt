@@ -10,6 +10,13 @@
   </style>
   <style>
     .lane{min-width:0}
+    .badge,.ref{max-width:100%;overflow-wrap:anywhere}
+    a{color:var(--blue);text-underline-offset:3px;overflow-wrap:anywhere}
+    a:focus-visible,.evidence:focus{outline:3px solid var(--blue);outline-offset:3px}
+    .evidence:target{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+    .evidence{scroll-margin-top:16px}
+    .outcome-summary .meta{margin-top:0}
+    .outcome-summary .legend{margin-bottom:0}
     .comparison-after{inset:0;width:100%;overflow:visible;border-right:0;clip-path:inset(0 0 0 var(--split))}
     .comparison-after img{width:100%;max-width:100%}
     .comparison-stage.layout-portrait .comparison-frame{aspect-ratio:430/900;width:min(100%,430px);margin-inline:auto}
@@ -25,6 +32,8 @@
     <p class="summary">{{SUMMARY}}</p>
     <div class="refs">{{REFS}}</div>
   </header>
+  {{OUTCOME_SUMMARY}}
+  <section class="panel"><h2>{{CLAIMS_TITLE}}</h2><div class="cards">{{CLAIMS}}</div></section>
   <section class="lanes" aria-label="Before and after comparison">
     <article class="lane"><div class="label">{{BEFORE_LABEL}}</div><h2>{{BEFORE_TITLE}}</h2><p>{{BEFORE}}</p></article>
     <div class="arrow" aria-hidden="true">→</div>
@@ -34,7 +43,6 @@
   {{REPORT_EXTRAS}}
   {{VISUAL_COMPARISONS}}
   <section class="panel"><h2>{{COMMITS_TITLE}}</h2>{{COMMIT_TRUNCATION}}<div class="commit-list">{{COMMITS}}</div></section>
-  <section class="panel"><h2>{{CLAIMS_TITLE}}</h2><div class="cards">{{CLAIMS}}</div></section>
   <section class="panel"><h2>{{EVIDENCE_TITLE}}</h2><div class="evidence-grid">{{EVIDENCE}}</div></section>
   <section class="panel"><h2>{{INVENTORY_TITLE}}</h2>{{TRUNCATION}}<table class="inventory"><thead><tr><th>{{STATUS_LABEL}}</th><th>{{PATH_LABEL}}</th><th>{{DELTA_LABEL}}</th></tr></thead><tbody>{{INVENTORY}}</tbody></table></section>
   <section class="panel legend"><h2>{{LEGEND_TITLE}}</h2>{{LEGEND}}</section>

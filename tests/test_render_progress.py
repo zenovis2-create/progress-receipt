@@ -112,6 +112,92 @@ class RenderProgressTests(unittest.TestCase):
         if artifact_dir:
             shutil.copytree(output, Path(artifact_dir))
 
+    def test_all_report_states_use_a_neutral_heading(self) -> None:
+        for language in ("en", "ko"):
+            for status in ("incomplete", "blocked", "verified"):
+                with self.subTest(language=language, status=status):
+                    manifest = base_manifest()
+                    manifest["report"]["lang"] = language
+                    manifest["report"]["status"] = status
+                    manifest["claims"][0]["status"] = "changed" if status == "incomplete" else status
+                    _, html, temp = self.publish(manifest)
+                    self.addCleanup(temp.cleanup)
+                    self.assertNotIn("Verified project progress", html)
+                    self.assertNotIn("검증된 프로젝트 진행", html)
+                    self.assertNotIn("Accepted baseline", html)
+                    self.assertIn("Project evidence receipt" if language == "en" else "프로젝트 증거 보고서", html)
+                    self.assertIn(f'Evidence package: {status}' if language == "en" else f'증거 패키지: {status}', html)
+
+    def test_mixed_outcomes_are_counted_and_gaps_shown_first(self) -> None:
+        manifest = base_manifest()
+        for status in ("changed", "not_observed", "blocked"):
+            manifest["claims"].append({
+                "id": status, "title": status, "detail": status,
+                "status": status, "source": "agent", "evidenceIds": ["test"],
+            })
+        output, html, temp = self.publish(manifest)
+        self.addCleanup(temp.cleanup)
+        for status in ("blocked", "not_observed", "changed", "verified"):
+            self.assertIn(f'{status}: 1', html)
+        self.assertIn("Evidence package: verified", html)
+        self.assertIn("Release readiness is not assessed", html)
+        order = [html.index(f'id="claim-{name}"') for name in ("blocked", "not_observed", "changed", "claim")]
+        self.assertEqual(sorted(order), order)
+        self.assertLess(order[-1], html.index('class="metrics"'))
+        published = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["claims"], published["claims"])
+
+    def test_empty_report_does_not_imply_verified_outcomes(self) -> None:
+        manifest = base_manifest()
+        manifest["report"]["status"] = "incomplete"
+        manifest["claims"] = []
+        manifest["evidence"] = []
+        _, html, temp = self.publish(manifest)
+        self.addCleanup(temp.cleanup)
+        for status in ("blocked", "not_observed", "changed", "verified"):
+            self.assertIn(f'{status}: 0', html)
+        self.assertIn("No claims were recorded", html)
+
+    def test_claim_links_target_unique_focusable_evidence(self) -> None:
+        manifest = base_manifest()
+        manifest["claims"][0]["id"] = "test"
+        manifest["evidence"][0]["label"] = 'Check <script>alert("x")</script>'
+        _, html, temp = self.publish(manifest)
+        self.addCleanup(temp.cleanup)
+        self.assertIn('href="#evidence-test">test</a>', html)
+        self.assertEqual(1, html.count('id="evidence-test"'))
+        self.assertEqual(1, html.count('id="claim-test"'))
+        self.assertIn('id="evidence-test" class="evidence command" tabindex="-1"', html)
+        self.assertIn("Check &lt;script&gt;", html)
+        self.assertNotIn('Check <script>', html)
+        self.assertIn('captured: 2026-08-04T00:00:00Z', html)
+
+    def test_evidence_fragment_rejects_unsafe_ids(self) -> None:
+        for value in ('x\" onclick=\"alert(1)', '../test', 'https://example.com', 'x#other'):
+            with self.subTest(value=value):
+                manifest = base_manifest()
+                manifest["evidence"][0]["id"] = value
+                manifest["claims"][0]["evidenceIds"] = [value]
+                with tempfile.TemporaryDirectory() as temp:
+                    with self.assertRaisesRegex(render_progress.RenderError, "safe identifiers"):
+                        render_progress.validate_manifest(manifest, Path(temp) / "manifest.json")
+
+    def test_capture_discloses_escaped_reviewer_identity(self) -> None:
+        manifest = base_manifest()
+        item = capture("shot", "before.png")
+        item["reviewer"]["name"] = "Reviewer <admin>"
+        manifest["evidence"].append(item)
+        _, html, temp = self.publish(manifest)
+        self.addCleanup(temp.cleanup)
+        self.assertIn("reviewed by: Reviewer &lt;admin&gt; (human)", html)
+
+    def test_verified_claim_still_rejects_failed_commands(self) -> None:
+        manifest = base_manifest()
+        manifest["evidence"][0]["exitCode"] = 1
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(render_progress.RenderError, "failed command"):
+                render_progress.validate_manifest(manifest, Path(temp) / "manifest.json")
+
     def test_comparison_rejects_non_capture_evidence(self) -> None:
         manifest = base_manifest()
         manifest["report"]["visualComparisons"] = [{"id": "bad", "title": "Bad", "source": "agent", "status": "changed", "beforeEvidenceId": "test", "afterEvidenceId": "test"}]

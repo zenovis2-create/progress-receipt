@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "htmlSha256": "73b9b193ccbccb96e9c2e288f17cb26edebec026840a5e3d582ba62eccbdc5b4",
+  "manifestSha256": "56de94c377cecbe7647e6a51b5b9209ae9d8acfa9e48c081a6cdd14a9f4eff20",
+  "assets": {
+    "assets/dashboard-after.png": "aa90e83e68ffaeb0b5f1b12b9b10b6d42b4f21ae8cdbc906f5e64b56a24744c3",
+    "assets/dashboard-before.png": "b14819e2ae88f07ef8d3f4122f09d07ef219b990b992001aaa2fed6dec721d9b"
+  }
+}
