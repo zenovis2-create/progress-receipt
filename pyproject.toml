@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "progress-receipt"
-version = "0.2.0"
+version = "0.2.1"
 description = "Receipts for AI coding work: changes, checks, blockers, and gaps in one shareable report."
 readme = "README.md"
 requires-python = ">=3.10"
