@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import unittest
 
-from progress_receipt import accept, collect, render
+from progress_receipt import accept, collect, render, summary
 from progress_receipt._skill_loader import skill_root
 
 
@@ -16,6 +16,7 @@ class PackageLayoutTests(unittest.TestCase):
             "collect_progress.py": collect._IMPLEMENTATION,
             "render_progress.py": render._IMPLEMENTATION,
             "accept_progress.py": accept._IMPLEMENTATION,
+            "summary_progress.py": summary._IMPLEMENTATION,
         }
         for filename, module in implementations.items():
             with self.subTest(filename=filename):

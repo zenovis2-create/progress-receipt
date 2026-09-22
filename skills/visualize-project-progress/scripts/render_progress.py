@@ -358,21 +358,39 @@ def render_metric(item: dict[str, Any], korean: bool) -> str:
 
 def render_claim(item: dict[str, Any]) -> str:
     status = item["status"]
-    evidence = ", ".join(item.get("evidenceIds", [])) or "none"
-    return f'<article class="card {h(status)}"><h3>{h(item["title"])}</h3><p>{h(item["detail"])}</p><div class="meta"><span class="badge status-{h(status)}">{h(status)}</span><span class="badge source">source: {h(item["source"])}</span><span class="badge">evidence: {h(evidence)}</span></div></article>'
+    evidence = ", ".join(
+        f'<a href="#evidence-{h(evidence_id)}">{h(evidence_id)}</a>'
+        for evidence_id in item.get("evidenceIds", [])
+    ) or "none"
+    return f'<article id="claim-{h(item["id"])}" class="card {h(status)}"><h3>{h(item["title"])}</h3><p>{h(item["detail"])}</p><div class="meta"><span class="badge status-{h(status)}">{h(status)}</span><span class="badge source">source: {h(item["source"])}</span><span class="badge">evidence: {evidence}</span></div></article>'
+
+
+def render_outcome_summary(claims: list[dict[str, Any]], korean: bool) -> str:
+    title = "결과별 확인 상태" if korean else "Outcome checks"
+    note = (
+        "증거 패키지 상태와 개별 결과 상태는 다릅니다. 배포 준비 여부를 판정하지 않습니다."
+        if korean else
+        "Evidence package status is separate from outcome status. Release readiness is not assessed."
+    )
+    counts = "".join(
+        f'<span class="badge status-{status}">{status}: {sum(claim["status"] == status for claim in claims)}</span>'
+        for status in ("blocked", "not_observed", "changed", "verified")
+    )
+    return f'<section class="panel outcome-summary" aria-label="{h(title)}"><h2>{h(title)}</h2><div class="meta">{counts}</div><p class="legend">{h(note)}</p></section>'
 
 
 def render_evidence(item: dict[str, Any], capture_names: dict[str, str]) -> str:
-    details = [f'kind: {h(item["kind"])}', f'ref: {h(item["producedAtRef"][:12])}', f'source: {h(item["source"])}']
+    details = [f'kind: {h(item["kind"])}', f'ref: {h(item["producedAtRef"][:12])}', f'source: {h(item["source"])}', f'captured: {h(item["capturedAt"])}']
     if item["kind"] == "command":
         details.append(f'exit: {h(item["exitCode"])}')
     image = ""
     if item["kind"] == "capture":
         image = f'<img src="assets/{h(capture_names[item["id"]])}" alt="{h(item["alt"])}">'
-        details.append("capture reviewed")
+        reviewer = item["reviewer"]
+        details.append(f'reviewed by: {h(reviewer["name"])} ({h(reviewer["source"])})')
     detail_html = "".join(f'<span class="badge">{detail}</span>' for detail in details)
     command = f'<p><code>{h(item["command"])}</code></p>' if item["kind"] == "command" else ""
-    return f'<article class="evidence {h(item["kind"])}"><h3>{h(item["label"])}</h3>{command}<div class="meta">{detail_html}</div>{image}</article>'
+    return f'<article id="evidence-{h(item["id"])}" class="evidence {h(item["kind"])}" tabindex="-1"><h3>{h(item["label"])}</h3>{command}<div class="meta">{detail_html}</div>{image}</article>'
 
 
 def render_visual_comparisons(
@@ -461,10 +479,10 @@ def render(payload: dict[str, Any], template: str, capture_names: dict[str, str]
     range_data = payload["range"]
     korean = report["lang"].lower().startswith("ko")
     labels = {
-        "EYEBROW": "검증된 프로젝트 진행" if korean else "Verified project progress",
+        "EYEBROW": "프로젝트 증거 보고서" if korean else "Project evidence receipt",
         "BEFORE_LABEL": "이전" if korean else "Before",
         "AFTER_LABEL": "이후" if korean else "After",
-        "BEFORE_TITLE": "승인된 기준 상태" if korean else "Accepted baseline",
+        "BEFORE_TITLE": "선택한 기준 상태" if korean else "Selected baseline",
         "AFTER_TITLE": "현재 상태" if korean else "Current state",
         "CLAIMS_TITLE": "무엇이 바뀌었고 어떤 의미인가" if korean else "What changed and what it means",
         "EVIDENCE_TITLE": "검증 증거" if korean else "Verification evidence",
@@ -478,12 +496,13 @@ def render(payload: dict[str, Any], template: str, capture_names: dict[str, str]
         f'<span class="ref" title="{h(range_data["fromRef"])}">baseline {h(range_data["fromRef"][:12])}</span>'
         f'<span class="ref" title="{h(range_data["toRef"])}">head {h(range_data["toRef"][:12])}</span>'
         f'<span class="ref">branch {h(payload["repository"]["branch"])}</span>'
-        f'<span class="badge status-{h(report["status"])}">{h(report["status"])}</span>'
-        f'<span class="badge">QA {h(payload["qualityGate"]["status"])}</span>'
+        f'<span class="badge status-{h(report["status"])}">{("증거 패키지" if korean else "Evidence package")}: {h(report["status"])}</span>'
+        f'<span class="badge">{("보고서 QA" if korean else "Report QA")}: {h(payload["qualityGate"]["status"])}</span>'
         f'<span class="badge">text sanitized</span>'
         f'<span class="badge">captures {"reviewed" if payload["privacy"]["capturesReviewed"] else "none"}</span>'
     )
-    claims = "".join(render_claim(item) for item in payload["claims"]) or '<p class="empty">No claims were recorded.</p>'
+    priority = {"blocked": 0, "not_observed": 1, "changed": 2, "verified": 3}
+    claims = "".join(render_claim(item) for item in sorted(payload["claims"], key=lambda item: priority[item["status"]])) or '<p class="empty">No claims were recorded.</p>'
     evidence = "".join(render_evidence(item, capture_names) for item in payload["evidence"]) or '<p class="empty">No verification evidence was recorded.</p>'
     inventory, truncation = render_inventory(payload)
     commits, commit_truncation = render_commits(payload)
@@ -501,6 +520,7 @@ def render(payload: dict[str, Any], template: str, capture_names: dict[str, str]
         "AFTER_TITLE": labels["AFTER_TITLE"],
         "AFTER": h(report["after"]["text"]),
         "METRICS": "".join(render_metric(item, korean) for item in payload["metrics"]),
+        "OUTCOME_SUMMARY": render_outcome_summary(payload["claims"], korean),
         "REPORT_EXTRAS": render_report_extras(report, korean),
         "VISUAL_COMPARISONS": render_visual_comparisons(report, evidence_by_id, capture_names, korean),
         "CLAIMS": claims,

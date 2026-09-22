@@ -31,6 +31,18 @@ Rendering validates evidence and publishes `index.html` plus a manifest snapshot
 
 Report status describes the evidence package, not an aggregate of its claim statuses. A report with `report.status: verified` may therefore contain `blocked` claims when each blocker is stated truthfully and bound to fresh evidence.
 
+The bundled HTML uses a neutral evidence-receipt heading and labels report status as the evidence-package status. It separately counts each claim state, displays blocked and unobserved claims before other claims, and links evidence IDs to local, keyboard-focusable evidence cards. This presentation does not change manifest order, claim states, acceptance rules, or schema version. Capture cards name the recorded reviewer and provenance, not an authenticated or necessarily independent verifier. Release readiness is not assessed.
+
+## Optional Markdown export
+
+`summary_progress.py --report DIR --report-url URL [--output FILE]` reads a sealed report without changing it. It checks the exact integrity-receipt file set and hashes, validates the manifest using the same evidence rules, and checks published capture hashes. Export never replays commands, accesses Git/network, or advances baseline state. Package/QA status is reported as recorded, not as a newly observed project outcome. Current repository freshness, acceptance, independent review, release readiness, and the user-supplied link destination are not established by export.
+
+The companion includes all four claim-state counts, up to eight claims sorted blocked/unobserved first, provenance, and up to three evidence links per claim. Omitted claims are counted by state; omitted links are counted per claim; title/detail text is bounded at 120/240 characters and shortened with `…`. Narrative is sanitized and encoded as literal Markdown text. The exact source refs, worktree fingerprint, and manifest SHA-256 identify the report being summarized. English and Korean reports use matching labels.
+
+The destination must be an explicit HTTP(S) URL or relative URL path without credentials, query, or fragment. Relative URLs resolve in the eventual Markdown viewing context. Link targets use validated evidence IDs only when the source HTML has the anchor; older HTML falls back to the report URL with a notice. No URL is inferred from a local home path or automatically published.
+
+File export uses exclusive creation outside the sealed report directory; the parent directory must exist. Default stdout is UTF-8 Markdown. Do not redirect stdout into a sealed report. The summary is not included in the existing integrity contract and must not be treated as signed, accepted, or independently verified. Creating or copying files into the original report still causes acceptance to fail.
+
 ## Enrichment example
 
 ```json

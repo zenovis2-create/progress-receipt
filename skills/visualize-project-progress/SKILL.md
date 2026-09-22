@@ -32,6 +32,16 @@ Turn a project work cycle into a self-contained HTML report. Treat a code diff a
    python scripts/accept_progress.py --repo . --report .progress/report-<head> --state .progress/state.json
    ```
 
+## Optional PR summary
+
+After rendering, export a short Markdown companion without modifying the sealed report:
+
+```bash
+python scripts/summary_progress.py --report .progress/report-<head> --report-url report-<head>/index.html --output .progress/pr-summary.md
+```
+
+Keep the output outside the report directory (including when redirecting stdout). The destination must be chosen for the eventual reader: use a relative path for local review, or an explicitly published HTTP(S) HTML URL for a PR. Export never uploads/posts, checks the URL, replays evidence, or accepts a baseline. It preserves recorded statuses, counts omissions, and discloses that current repository state and release readiness were not checked. Review the summary and its link before sharing; do not mark QA passed just because export succeeds.
+
 ## Evidence Rules
 
 - Keep `changed`, `verified`, `blocked`, and `not_observed` visually and semantically distinct.

@@ -15,6 +15,7 @@ _DEPENDENCIES = {
     "collect_progress": (),
     "render_progress": ("collect_progress",),
     "accept_progress": ("collect_progress", "render_progress"),
+    "summary_progress": ("accept_progress",),
 }
 
 

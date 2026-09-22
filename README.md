@@ -33,6 +33,8 @@ The skill is self-contained under [`skills/visualize-project-progress`](skills/v
 - `blocked`: a current observation records why an outcome could not complete.
 - `not_observed`: the report makes an unchecked outcome explicit.
 
+The first screen separates the evidence-package status from counts of individual outcomes. Blocked and unobserved claims appear first, and each claim links directly to its evidence card. Capture cards disclose who recorded the review; this is provenance, not independent authentication. The report does not assess release readiness.
+
 Honest limits are part of the artifact: a successful command is not proof of correctness, text sanitization is best-effort, and captures rely on recorded agent or human review. See the full [limitations](docs/limitations.md), [threat model](docs/threat-model.md), and [report contract](skills/visualize-project-progress/references/report-contract.md).
 
 ## Why another artifact?
@@ -66,10 +68,19 @@ All runtime code is Python 3.10+ and standard-library only.
 progress-receipt collect --repo . --base <ref> --output .progress/draft.json
 progress-receipt render --manifest .progress/draft.json --template skills/visualize-project-progress/assets/report-template.html --output .progress/report
 progress-receipt accept --repo . --report .progress/report --state .progress/state.json
+progress-receipt summary --report .progress/report --report-url report/index.html --output .progress/pr-summary.md
 progress-receipt demo
 ```
 
-`collect`, `render`, and `accept` delegate to the exact standalone skill scripts packaged in the wheel. The copies under `src/progress_receipt/` are loaders, not duplicated implementations.
+`collect`, `render`, `accept`, and `summary` delegate to the exact standalone skill scripts packaged in the wheel. The copies under `src/progress_receipt/` are loaders, not duplicated implementations.
+
+### PR Markdown summary (local export)
+
+`summary` checks the sealed package's file hashes, manifest contract, and capture hashes, then exports a short Markdown companion. It keeps all four outcome counts, shows up to eight claims (blocked and unobserved first), retains provenance and evidence links, and explicitly counts omitted claims by status. Each claim shows up to three evidence links; additional links and shortened text are disclosed. Labels follow the report's English/Korean language.
+
+`--report-url` is required: supply the HTML location the reader will actually use. Relative paths resolve from the eventual Markdown/PR viewing location, **not** the report directory. For a PR, use an explicitly published HTTP(S) HTML URL if available; the exporter does not publish, fetch, or verify the destination. Credentials, query strings, fragments, local absolute paths, and non-HTTP schemes are rejected. Older HTML without evidence anchors falls back to the report's first page with a warning.
+
+Omit `--output` for UTF-8 Markdown on stdout. An output file must be new, its parent must exist, and it must be **outside** the sealed report directory. Never redirect stdout into that directory either: extra files invalidate the integrity receipt. The summary is a derived, unsealed artifact identified by the source manifest hash. It does not execute evidence commands, access Git or the network, accept a baseline, establish independent verification, or assess current repository state/release readiness. An incomplete package remains explicitly incomplete. Review the summary and link destination before sharing; normal best-effort sanitization limits still apply.
 
 ## Development
 

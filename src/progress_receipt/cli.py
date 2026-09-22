@@ -11,7 +11,7 @@ import sys
 import webbrowser
 
 from . import __version__
-from . import accept, collect, render
+from . import accept, collect, render, summary
 from ._demo import DemoError, build_demo, summarize
 
 
@@ -25,6 +25,7 @@ def parser() -> argparse.ArgumentParser:
     subcommands.add_parser("collect", add_help=False, help="Collect a bounded Git manifest")
     subcommands.add_parser("render", add_help=False, help="Render and seal a report directory")
     subcommands.add_parser("accept", add_help=False, help="Accept a QA-complete report as baseline")
+    subcommands.add_parser("summary", add_help=False, help="Export a local PR Markdown summary")
     demo = subcommands.add_parser("demo", help="Generate a privacy-safe report from a canned repository")
     demo.add_argument("--output", help="Write the report directory here instead of a temporary directory")
     demo.add_argument("--open", action="store_true", dest="open_report", help="Open the finished report in the default browser")
@@ -41,6 +42,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return render.main(remainder)
     if args.command == "accept":
         return accept.main(remainder)
+    if args.command == "summary":
+        return summary.main(remainder)
     if remainder:
         parser().error(f"unrecognized arguments: {' '.join(remainder)}")
     try:
