@@ -87,8 +87,8 @@ def markdown(payload: dict[str, Any], url: str, anchors: set[str], digest: str) 
     missing_anchor = False
     for claim in claims[:MAX_CLAIMS]:
         lines.extend([
-            f"- **{claim['status']}** · source: `{claim['source']}` — {text(claim['title'], 120)}  ",
-            "  " + text(claim["detail"], 240) + "  ",
+            f"- **{claim['status']}** · source: `{claim['source']}` — {text(claim['title'], 120)}\\",
+            "  " + text(claim["detail"], 240) + "\\",
         ])
         links = []
         evidence_ids = claim.get("evidenceIds", [])
@@ -113,8 +113,8 @@ def markdown(payload: dict[str, Any], url: str, anchors: set[str], digest: str) 
                            if korean else "Some HTML evidence anchors are absent; those links open the report instead.")])
     lines.extend([
         "",
-        ("참조 범위" if korean else "Ref range") + f": `{payload['range']['fromRef']}` → `{payload['range']['toRef']}`  ",
-        f"Worktree: `{payload['repository']['worktreeFingerprint']}`  ",
+        ("참조 범위" if korean else "Ref range") + f": `{payload['range']['fromRef']}` → `{payload['range']['toRef']}`\\",
+        f"Worktree: `{payload['repository']['worktreeFingerprint']}`\\",
         f"Manifest SHA-256: `{digest}`",
         "",
         ("로컬 패키지 무결성을 검사한 파생 요약이며 봉인된 보고서의 일부가 아닙니다. 긴 텍스트는 …로 줄입니다."

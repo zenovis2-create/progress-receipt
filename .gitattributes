@@ -7,3 +7,4 @@
 # Sealed reports are byte-exact: their SHA-256 receipt covers these files, so
 # Git must never translate their line endings. This rule stays last so it wins.
 examples/self-report/** -text
+examples/summary-demo/** -text

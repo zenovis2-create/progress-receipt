@@ -6,7 +6,9 @@
 
 ![Demo: run progress-receipt, compare before and after, then inspect claims and evidence](docs/demo.gif)
 
-[Inspect the committed self-report](examples/self-report/index.html) generated from this repository’s own bounded launch range. Its [sanitized manifest](examples/self-report/manifest.json) and [integrity receipt](examples/self-report/integrity.json) are committed beside it; GitHub Pages publication is tracked in [the launch checklist](docs/launch-todo.md).
+[Inspect the committed self-report](examples/self-report/index.html) generated from this repository’s own bounded launch range. Its [sanitized manifest](examples/self-report/manifest.json) and [integrity receipt](examples/self-report/integrity.json) are committed beside it.
+
+Try the [current synthetic demo](https://zenovis2-create.github.io/progress-receipt/examples/summary-demo/index.html) and its [PR Markdown companion](examples/pr-summary.md). This canned fixture demonstrates the review interface, not verification of this repository's release. The older self-report remains unchanged.
 
 ## Run the checkout demo
 
@@ -17,6 +19,16 @@ uvx --from . progress-receipt demo
 The command creates an isolated canned Git fixture and runs the real collect → render → accept pipeline. Stdout stays one absolute `index.html` path; stderr summarizes the range, four claim states, and linked evidence. The fixture does not inspect another project and runs with global and system Git configuration disabled, so settings such as `commit.gpgsign` or `core.hooksPath` cannot change the result.
 
 Add `--output DIR` to keep the report somewhere permanent, `--open` to launch it in your browser, or `--quiet` to print only the path. After the package is published to PyPI, the shorter `uvx progress-receipt demo` form will run the same command.
+
+## Install a release
+
+Wheel and source distributions are available on [GitHub Releases](https://github.com/zenovis2-create/progress-receipt/releases/latest):
+
+```console
+uvx --from https://github.com/zenovis2-create/progress-receipt/releases/download/v0.2.0/progress_receipt-0.2.0-py3-none-any.whl progress-receipt demo
+```
+
+PyPI publication is separate and currently requires configuration; do not assume the bare `uvx progress-receipt` command resolves. See [publication status](docs/launch-todo.md).
 
 ## Install the Agent Skill
 
@@ -101,6 +113,6 @@ uvx --from . progress-receipt demo
 
 The committed launch receipt is reproducible from a clean release-candidate commit with `python tools/generate_self_report.py --output <outside-repo-directory>`. It deliberately renders outside the checkout so the collected worktree fingerprint stays unchanged; copy the sealed directory into `examples/self-report/` only after review and acceptance.
 
-The committed CI workflow covers the full suite and demo on Ubuntu, macOS, and Windows with Python 3.10 through 3.13. The unpushed launch-prep commits on this branch were checked locally on Python 3.10 and 3.12; their hosted rerun and external publication work remain in [`docs/launch-todo.md`](docs/launch-todo.md).
+The CI workflow covers the full suite and demo on Ubuntu, macOS, and Windows with Python 3.10 through 3.13. Tag releases build and test the distributions, publish GitHub release assets, and publish to PyPI only when `PYPI_TOKEN` is configured. A missing token produces an explicit PyPI-skip notice, not a claim of registry publication. Track remaining publication work in [`docs/launch-todo.md`](docs/launch-todo.md).
 
 MIT licensed. See [LICENSE](LICENSE).
