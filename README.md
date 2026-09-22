@@ -25,7 +25,7 @@ Add `--output DIR` to keep the report somewhere permanent, `--open` to launch it
 Wheel and source distributions are available on [GitHub Releases](https://github.com/zenovis2-create/progress-receipt/releases/latest):
 
 ```console
-uvx --from https://github.com/zenovis2-create/progress-receipt/releases/download/v0.2.0/progress_receipt-0.2.0-py3-none-any.whl progress-receipt demo
+uvx --from https://github.com/zenovis2-create/progress-receipt/releases/download/v0.2.1/progress_receipt-0.2.1-py3-none-any.whl progress-receipt demo
 ```
 
 PyPI publication is separate and currently requires configuration; do not assume the bare `uvx progress-receipt` command resolves. See [publication status](docs/launch-todo.md).

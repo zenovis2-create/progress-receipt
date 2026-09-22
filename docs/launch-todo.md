@@ -3,7 +3,7 @@
 ## Configured delivery paths
 
 - Hosted CI: Ubuntu, macOS, and Windows × Python 3.10–3.13. Check the [actual runs](https://github.com/zenovis2-create/progress-receipt/actions/workflows/ci.yml) for a specific commit; a configured matrix is not itself a passing result.
-- GitHub Releases: tags build/test the wheel and sdist, then publish them as [release assets](https://github.com/zenovis2-create/progress-receipt/releases). The v0.2.0 README includes a pinned wheel installation command.
+- GitHub Releases: tags build/test the wheel and sdist, then publish them as [release assets](https://github.com/zenovis2-create/progress-receipt/releases). The v0.2.1 README includes a pinned wheel installation command. The v0.2.0 release job failed before building because its inherited `setup-python` pin did not exist; the old tag is preserved, and v0.2.1 corrects the pin without rewriting published history.
 - GitHub Pages: enabled from `main` at the repository root. The [synthetic review demo](https://zenovis2-create.github.io/progress-receipt/examples/summary-demo/index.html) and [historical self-report](https://zenovis2-create.github.io/progress-receipt/examples/self-report/index.html) are separate artifacts. The new demo does not certify release readiness; the old self-report stays sealed and unchanged.
 
 ## Still requiring setup or external verification
